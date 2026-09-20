@@ -11,6 +11,16 @@ tended to rate them the same way. The result is that *The Dark Knight* leads to
 would ever produce.
 
 
+## Tech stack
+
+- Python 3.11+
+- Flask (application-factory pattern)
+- Flask-SQLAlchemy, Flask-Login, Flask-Bcrypt, Flask-WTF
+- Pandas / NumPy / Scipy / Pillow (catalog + recommendations)
+- SQLite (accounts, watchlists)
+- Tailwind CSS (via CDN) + Jinja2 templates
+
+
 ## What it does
 
 | Feature | Description |
@@ -265,17 +275,6 @@ attached, so you can set breakpoints in the recommender and step through it.
 
 ### 7. Log in
 
-The database and a default administrator are created automatically on first
-run:
-
-- **Email:** `admin@moviehub.com`
-- **Password:** `Admin123!`
-
-Change `ADMIN_PASSWORD` in `.env` before using this anywhere but your own
-machine.
-
-### Try it out
-
 1. Register a normal account (the password needs upper, lower, a digit and a symbol).
 2. Open a few films you like and rate them.
 3. Visit **For you** — the recommendations will have changed.
@@ -309,71 +308,6 @@ python scripts/build_model.py --keywords 20        # more tags per movie
 
 The script streams `rating.csv` in chunks and peaks at roughly 1.5 GB of RAM.
 
-
-
-## Configuration
-
-Everything is environment-driven; see `.env.example` for the full list.
-
-| Variable | Default | Purpose |
-|---|---|---|
-| `FLASK_ENV` | `development` | `development`, `production` or `testing` |
-| `SECRET_KEY` | dev placeholder | **required in production** — the app refuses to start otherwise |
-| `DATABASE_URL` | `sqlite:///instance/site.db` | any SQLAlchemy URL |
-| `DATA_DIR` | `./data/processed` | where the trained artifacts live |
-| `ADMIN_USERNAME` / `ADMIN_EMAIL` / `ADMIN_PASSWORD` | `admin` / `admin@moviehub.com` / `Admin123!` | bootstrap administrator |
-| `WATCHLIST_MAX_ITEMS` | `20` | per-user watchlist cap |
-| `RECOMMENDER_RESULT_LIMIT` | `12` | recommendations per query |
-| `TMDB_API_KEY` | empty | enables `scripts/fetch_posters.py` |
-
-
----
-
-## Design decisions
-
-**Why the training is a separate script.** Parsing 20M ratings and multiplying
-a 4,489 × 138,493 matrix takes tens of seconds and over a gigabyte of RAM. A web
-request cannot afford either. Splitting "train offline, serve online" is how
-real recommender systems are built, and it keeps the app's start-up under a
-second.
-
-**Why only the top 50 neighbours are stored.** The full similarity matrix is
-80 MB. Serving a top-12 recommendation never looks past the top 50, so storing
-more costs memory and buys nothing.
-
-**Why no pandas at runtime.** The catalog is 4,489 rows. A DataFrame offers
-nothing at that size, and dropping the import removes several seconds from
-start-up. The web app uses the standard library's `csv` module; pandas and scipy
-are only needed by `scripts/build_model.py`.
-
-**Why `fuzzywuzzy` was removed.** The previous search ran five
-`partial_ratio` calls against every row of the catalog for every query. Search
-now generates candidates through an inverted token index, and only falls back to
-fuzzy matching when that misses — correcting the query's words against the
-vocabulary of words that actually appear in titles, which is both faster and more
-accurate than comparing against whole titles. Typical search: 0.1 ms literal,
-5 ms with a typo.
-
-**Why ratings are their own table.** The watchlist alone is a weak, binary
-signal. Explicit 1–5 ratings on MovieLens' own scale can be compared directly
-against the trained model with no rescaling, and let a user express dislike —
-which is what makes the negative half of the scoring formula meaningful.
-
-**Why MovieLens keywords replace plot summaries.** MovieLens has no overview,
-cast or director fields. Rather than leave the detail page empty or invent data,
-the build script extracts each film's most relevant tags from the *tag genome*
-(1,128 curated tags scored for relevance across the dataset). These are the
-dataset's own descriptive layer and are honest about their provenance.
-
-**Security.** Passwords are bcrypt-hashed. All state-changing routes are
-POST-only and CSRF-protected. `?next=` and `request.referrer` redirects are
-validated against the current host, closing the open-redirect hole in the
-original code. Uploaded filenames are never trusted — only an allow-listed
-extension is kept and the stored name is random. Login failures return one
-message for both "no such email" and "wrong password", so the form cannot be
-used to enumerate accounts. The last administrator cannot be deleted or demoted.
-
----
 
 ## Dataset credit
 
