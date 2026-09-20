@@ -1,0 +1,37 @@
+{% extends "layout.html" %}
+{% block content %}
+{% include "_admin_nav.html" %}
+{% set field = "mt-1 block w-full rounded-xl border border-white/10 bg-zinc-950/60 px-4 py-3 text-sm text-white focus:border-amber-400 focus:outline-none focus:ring-2 focus:ring-amber-400/30" %}
+
+<div class="mx-auto max-w-2xl animate-fade-up rounded-3xl border border-white/10 bg-white/5 p-6 sm:p-8">
+  <h1 class="text-3xl font-bold text-white">{% if mode == 'create' %}Add movie{% else %}Edit movie{% endif %}</h1>
+
+  {% if mode == 'create' %}
+  <p class="mt-2 rounded-xl border border-sky-400/20 bg-sky-500/10 p-3 text-xs text-sky-100">
+    Movies added here appear in the catalog and in search, but they have no MovieLens rating history,
+    so the collaborative filter cannot recommend from them until the model is rebuilt.
+  </p>
+  {% elif movie %}
+  <p class="mt-2 text-sm text-zinc-400">
+    {{ '{:,}'.format(movie.rating_count) }} MovieLens ratings, averaging {{ '%.2f'|format(movie.rating_avg) }}.
+    Those figures come from the dataset and are not editable.
+  </p>
+  {% endif %}
+
+  <form method="POST" class="mt-6 space-y-4">
+    {{ form.hidden_tag() }}
+    {% for item in [form.movie_id, form.title, form.year, form.genres, form.keywords, form.imdb_id, form.poster_url] %}
+    <div>
+      {{ item.label(class="text-sm font-medium text-zinc-300") }}
+      {{ item(class=field, rows=3 if item.name == 'keywords' else None) }}
+      {% for error in item.errors %}<p class="mt-1 text-xs text-rose-300">{{ error }}</p>{% endfor %}
+    </div>
+    {% endfor %}
+    <p class="text-xs text-zinc-500">Genres and keywords are pipe-separated, e.g. <code>Action|Thriller</code>. Leave the poster URL empty to use generated artwork.</p>
+    <div class="flex flex-wrap gap-3 pt-2">
+      {{ form.submit(class="rounded-xl bg-amber-400 px-5 py-2.5 text-sm font-semibold text-zinc-950 hover:bg-amber-300") }}
+      <a class="rounded-xl border border-white/10 px-5 py-2.5 text-sm text-zinc-300 hover:text-white" href="{{ url_for('admin.movies') }}">Cancel</a>
+    </div>
+  </form>
+</div>
+{% endblock content %}

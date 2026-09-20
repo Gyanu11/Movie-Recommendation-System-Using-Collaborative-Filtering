@@ -1,0 +1,92 @@
+{% extends "layout.html" %}
+{% block content %}
+{% set field = "mt-1 block w-full rounded-xl border border-white/10 bg-zinc-950/60 px-4 py-3 text-sm text-white focus:border-amber-400 focus:outline-none focus:ring-2 focus:ring-amber-400/30" %}
+
+<div class="grid gap-8 lg:grid-cols-[1fr_1.3fr]">
+  <section class="animate-fade-up rounded-3xl border border-white/10 bg-white/5 p-6 shadow-xl sm:p-8">
+    <div class="flex items-center gap-4">
+      <img class="h-20 w-20 rounded-full object-cover ring-2 ring-amber-400/50" src="{{ image_file }}?v={{ timestamp }}" alt="Profile picture" />
+      <div>
+        <h1 class="text-2xl font-bold text-white">{{ current_user.username }}</h1>
+        <p class="text-sm text-zinc-400">{{ current_user.email }}</p>
+        {% if current_user.is_admin %}
+        <span class="mt-1 inline-flex rounded-full bg-amber-400/15 px-2 py-0.5 text-xs font-semibold text-amber-300">Administrator</span>
+        {% endif %}
+      </div>
+    </div>
+
+    <form method="POST" enctype="multipart/form-data" class="mt-6 space-y-4">
+      {{ form.hidden_tag() }}
+      {% for item in [form.username, form.email] %}
+      <div>
+        {{ item.label(class="text-sm font-medium text-zinc-300") }}
+        {{ item(class=field) }}
+        {% for error in item.errors %}<p class="mt-1 text-xs text-rose-300">{{ error }}</p>{% endfor %}
+      </div>
+      {% endfor %}
+      <div>
+        {{ form.picture.label(class="text-sm font-medium text-zinc-300") }}
+        {{ form.picture(class="mt-2 block w-full text-sm text-zinc-300 file:mr-3 file:rounded-lg file:border-0 file:bg-white/10 file:px-3 file:py-2 file:text-sm file:text-white") }}
+        {% for error in form.picture.errors %}<p class="mt-1 text-xs text-rose-300">{{ error }}</p>{% endfor %}
+      </div>
+      <button class="rounded-xl bg-amber-400 px-6 py-3 text-sm font-semibold text-zinc-950 hover:bg-amber-300" type="submit">Update profile</button>
+    </form>
+  </section>
+
+  <div class="space-y-8">
+    <section class="animate-fade-up rounded-3xl border border-white/10 bg-white/5 p-6 shadow-xl sm:p-8" style="animation-delay:100ms">
+      <div class="flex flex-wrap items-baseline justify-between gap-2">
+        <h2 class="text-xl font-bold text-white">Your ratings</h2>
+        <span class="text-xs text-zinc-500">{{ rated | length }} rated</span>
+      </div>
+      <p class="mt-1 text-xs text-zinc-400">These drive your personal recommendations.</p>
+
+      {% if rated %}
+      <ul class="mt-4 divide-y divide-white/5">
+        {% for movie in rated %}
+        <li class="flex items-center justify-between gap-3 py-3">
+          <div class="min-w-0">
+            <a class="block truncate font-medium text-white hover:text-amber-300" href="{{ url_for('main.movie_info', movie_id=movie.movie_id) }}">{{ movie.title }}</a>
+            <p class="text-xs text-zinc-500">{{ movie.year }}</p>
+          </div>
+          {% with value = movie.your_rating, label = 'You rated this %g out of 5'|format(movie.your_rating) %}{% include "_stars.html" %}{% endwith %}
+        </li>
+        {% endfor %}
+      </ul>
+      <a class="mt-4 inline-flex text-sm font-semibold text-amber-300 hover:text-amber-200" href="{{ url_for('main.for_you') }}">See what we recommend &rarr;</a>
+      {% else %}
+      <p class="mt-4 text-sm text-zinc-400">
+        You have not rated anything yet. Open any movie and give it a score to start building a profile.
+      </p>
+      {% endif %}
+    </section>
+
+    <section class="animate-fade-up rounded-3xl border border-white/10 bg-white/5 p-6 shadow-xl sm:p-8" style="animation-delay:180ms">
+      <div class="flex flex-wrap items-baseline justify-between gap-2">
+        <h2 class="text-xl font-bold text-white">Your watchlist</h2>
+        <span class="text-xs text-zinc-500">{{ watchlist | length }} / {{ watchlist_limit }}</span>
+      </div>
+
+      {% if watchlist %}
+      <div class="mt-4 grid grid-cols-2 gap-3 sm:grid-cols-3">
+        {% for movie in watchlist %}
+        <div class="rounded-2xl border border-white/10 bg-ink-900 p-3">
+          <a class="block text-sm font-semibold text-white hover:text-amber-300" href="{{ url_for('main.movie_info', movie_id=movie.movie_id) }}">{{ movie.title }}</a>
+          <p class="text-xs text-zinc-500">{{ movie.year }}</p>
+          <div class="mt-3 flex items-center gap-3">
+            <button class="text-xs font-semibold text-amber-300 hover:text-amber-200" type="button"
+                    data-play-trailer data-title="{{ movie.title }}" data-year="{{ movie.year }}">Trailer</button>
+            <form method="POST" action="{{ url_for('main.remove_from_watchlist', movie_id=movie.movie_id) }}">
+              <button class="text-xs text-rose-300 hover:text-rose-200" type="submit">Remove</button>
+            </form>
+          </div>
+        </div>
+        {% endfor %}
+      </div>
+      {% else %}
+      <p class="mt-4 text-sm text-zinc-400">Your watchlist is empty. Add films from any movie page.</p>
+      {% endif %}
+    </section>
+  </div>
+</div>
+{% endblock content %}

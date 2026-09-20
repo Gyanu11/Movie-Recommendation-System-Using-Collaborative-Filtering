@@ -1,0 +1,16 @@
+{#
+  Read-only star display.
+
+  Expects `value` (0-5, halves allowed) and an optional `label` for the tooltip.
+  The half-filled gradient is defined once in layout.html, so this partial can
+  be included many times on a page without duplicating SVG definitions.
+#}
+<span class="inline-flex items-center gap-0.5 align-middle" {% if label %}title="{{ label }}"{% endif %}>
+  {% for position in range(1, 6) %}
+    {% set fill = star_fill(value, position) %}
+    <svg class="h-4 w-4 {% if fill == 'empty' %}text-zinc-600{% else %}text-amber-400{% endif %}" viewBox="0 0 20 20" aria-hidden="true">
+      <path fill="{% if fill == 'half' %}url(#halfStarFill){% else %}currentColor{% endif %}"
+            d="M10 1.5l2.6 5.3 5.9.85-4.25 4.15 1 5.85L10 14.9l-5.25 2.75 1-5.85L1.5 7.65l5.9-.85L10 1.5z"/>
+    </svg>
+  {% endfor %}
+</span>

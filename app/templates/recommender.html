@@ -1,0 +1,79 @@
+{% extends "layout.html" %}
+{% block content %}
+{% set field = "mt-1 block w-full rounded-xl border border-white/10 bg-zinc-950/60 px-4 py-3 text-sm text-white placeholder:text-zinc-500 focus:border-amber-400 focus:outline-none focus:ring-2 focus:ring-amber-400/30" %}
+
+<section class="animate-fade-up rounded-3xl border border-white/10 bg-white/5 p-6 shadow-xl sm:p-8">
+  <p class="text-xs uppercase tracking-[0.25em] text-amber-300">Item-based collaborative filtering</p>
+  <h1 class="mt-2 text-3xl font-bold text-white">Movie recommender</h1>
+  <p class="mt-2 max-w-2xl text-sm text-zinc-400">
+    Name a film you enjoyed. The engine looks up how 138,000 MovieLens users rated it, then ranks
+    every other movie by cosine similarity between those rating patterns.
+  </p>
+
+  <form method="POST" class="mt-6 max-w-xl space-y-4" autocomplete="off">
+    {{ form.hidden_tag() }}
+    <div>
+      {{ form.moviename.label(class="text-sm font-medium text-zinc-300") }}
+      {{ form.moviename(class=field, placeholder="e.g. The Dark Knight", list="movie-suggestions", id="movieNameInput") }}
+      <datalist id="movie-suggestions"></datalist>
+      {% for error in form.moviename.errors %}<p class="mt-1 text-xs text-rose-300">{{ error }}</p>{% endfor %}
+    </div>
+    {{ form.submit(class="rounded-xl bg-amber-400 px-6 py-3 text-sm font-semibold text-zinc-950 hover:bg-amber-300") }}
+  </form>
+</section>
+
+{% if seed %}
+<section class="mt-8 flex flex-wrap items-center gap-4 rounded-2xl border border-white/10 bg-ink-900/60 p-4">
+  <img class="h-24 w-16 rounded-lg object-cover" src="{{ poster(seed) }}" alt="{{ seed.title }} poster" />
+  <div>
+    <p class="text-xs uppercase tracking-[0.2em] text-zinc-500">Matched your input to</p>
+    <a class="text-lg font-bold text-white hover:text-amber-300" href="{{ url_for('main.movie_info', movie_id=seed.movie_id) }}">{{ seed.title }}</a>
+    <p class="text-sm text-zinc-400">{{ seed.year }} · {{ '{:,}'.format(seed.rating_count) }} ratings · average {{ '%.2f'|format(seed.rating_avg) }}</p>
+  </div>
+</section>
+{% endif %}
+
+{% if results %}
+<div class="mt-8 grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-6">
+  {% for movie in results %}{% include "_movie_card.html" %}{% endfor %}
+</div>
+<p class="mt-4 text-xs text-zinc-500">
+  The percentage on each poster is the adjusted cosine similarity between that movie's ratings and
+  the seed movie's. Values above roughly 20% already indicate a strong audience overlap.
+</p>
+{% endif %}
+{% endblock content %}
+
+{% block scripts %}
+<script>
+  // Progressive enhancement: the form works without this, the datalist just
+  // makes it much easier to land on a title that exists in the catalog.
+  (function () {
+    const input = document.getElementById('movieNameInput');
+    const list = document.getElementById('movie-suggestions');
+    if (!input || !list) return;
+
+    let timer = null;
+    input.addEventListener('input', () => {
+      clearTimeout(timer);
+      const query = input.value.trim();
+      if (query.length < 2) return;
+      // Debounced so typing a title does not fire a request per keystroke.
+      timer = setTimeout(() => {
+        fetch('{{ url_for("main.suggest") }}?q=' + encodeURIComponent(query))
+          .then((r) => r.json())
+          .then((items) => {
+            list.innerHTML = '';
+            items.forEach((item) => {
+              const option = document.createElement('option');
+              option.value = item.title;
+              option.label = item.year;
+              list.appendChild(option);
+            });
+          })
+          .catch(() => {});
+      }, 180);
+    });
+  })();
+</script>
+{% endblock %}

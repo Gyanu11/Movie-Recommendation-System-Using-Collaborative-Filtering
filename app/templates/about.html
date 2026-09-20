@@ -1,0 +1,75 @@
+{% extends "layout.html" %}
+{% block content %}
+<section class="mx-auto max-w-3xl py-6">
+  <p class="text-xs uppercase tracking-[0.25em] text-amber-300">About</p>
+  <h1 class="mt-2 text-3xl font-extrabold text-white sm:text-4xl">Movie Hub</h1>
+  <p class="mt-4 text-sm leading-relaxed text-zinc-300 sm:text-base">
+    Movie Hub is a Flask web application that recommends films using
+    <strong class="text-white">item-based collaborative filtering</strong> trained on the
+    MovieLens 20M dataset. Rather than comparing plot summaries or genres, it compares how
+    real people rated things: two movies are similar when the same viewers tended to rate
+    them the same way.
+  </p>
+
+  {% if meta %}
+  <div class="mt-8 grid gap-4 sm:grid-cols-2">
+    {% set stats = [
+      ('Movies in the catalog', '{:,}'.format(meta.get('movies', catalog_size))),
+      ('Ratings used to train', '{:,}'.format(meta.get('ratings_used', 0))),
+      ('Distinct MovieLens users', '{:,}'.format(meta.get('users', 0))),
+      ('Neighbours stored per movie', meta.get('neighbours_per_movie', '-')),
+      ('Minimum ratings per movie', '{:,}'.format(meta.get('min_ratings_per_movie', 0))),
+      ('Model built in', '{} seconds'.format(meta.get('build_seconds', '-')))
+    ] %}
+    {% for label, value in stats %}
+    <div class="rounded-2xl border border-white/10 bg-white/5 p-5">
+      <p class="text-xs uppercase tracking-wide text-zinc-500">{{ label }}</p>
+      <p class="mt-1 text-2xl font-bold text-amber-300">{{ value }}</p>
+    </div>
+    {% endfor %}
+  </div>
+  <p class="mt-4 text-xs text-zinc-500">Model built {{ meta.get('built_at', 'unknown') }} (UTC).</p>
+  {% endif %}
+
+  <h2 class="mt-10 text-xl font-bold text-white">How the algorithm works</h2>
+  <ol class="mt-4 space-y-4 text-sm leading-relaxed text-zinc-300">
+    <li>
+      <span class="font-semibold text-amber-300">1. Filter.</span> Movies with fewer than 500 ratings are
+      dropped. Similarity computed from a handful of ratings is noise, not signal.
+    </li>
+    <li>
+      <span class="font-semibold text-amber-300">2. Build the matrix.</span> The surviving ratings become a
+      sparse movie &times; user matrix, where each cell is the score one user gave one film.
+    </li>
+    <li>
+      <span class="font-semibold text-amber-300">3. Adjust.</span> Each movie's mean rating is subtracted from
+      its own row. This removes the bias of films that almost everyone likes, leaving only how much
+      <em>more or less</em> than usual each viewer enjoyed it.
+    </li>
+    <li>
+      <span class="font-semibold text-amber-300">4. Cosine similarity.</span> Every row is normalised to unit
+      length, so multiplying the matrix by its own transpose yields the cosine of the angle between
+      every pair of movies &mdash; a score from 0 to 1.
+    </li>
+    <li>
+      <span class="font-semibold text-amber-300">5. Serve.</span> Only the top 50 neighbours of each movie are
+      kept, shrinking the model from about 80&nbsp;MB to under 2&nbsp;MB. Recommending then costs a
+      dictionary lookup and a short sum, not a matrix multiplication.
+    </li>
+  </ol>
+
+  <h2 class="mt-10 text-xl font-bold text-white">Personal recommendations</h2>
+  <p class="mt-3 text-sm leading-relaxed text-zinc-300">
+    For a signed-in user, every movie you have rated contributes its neighbours to a running score,
+    weighted by how far your rating sat above or below the middle of the scale. A five-star rating
+    pulls its neighbours up; a one-star rating pushes them down. Films you have already rated or
+    saved are removed before the ranking is returned.
+  </p>
+
+  <h2 class="mt-10 text-xl font-bold text-white">Dataset</h2>
+  <p class="mt-3 text-sm leading-relaxed text-zinc-300">
+    MovieLens 20M, published by the GroupLens research group at the University of Minnesota. It
+    contains 20,000,263 ratings and 465,564 tag applications across 27,278 movies from 138,493 users.
+  </p>
+</section>
+{% endblock %}

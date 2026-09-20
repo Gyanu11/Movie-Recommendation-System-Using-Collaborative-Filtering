@@ -1,0 +1,29 @@
+{% extends "layout.html" %}
+{% block content %}
+{% set field = "mt-1 block w-full rounded-xl border border-white/10 bg-zinc-950/60 px-4 py-3 text-sm text-white placeholder:text-zinc-500 focus:border-amber-400 focus:outline-none focus:ring-2 focus:ring-amber-400/30" %}
+
+<div class="mx-auto max-w-md animate-fade-up rounded-3xl border border-white/10 bg-white/5 p-6 shadow-xl sm:p-8">
+  <p class="text-xs uppercase tracking-[0.25em] text-amber-300">Join Movie Hub</p>
+  <h1 class="mt-2 text-3xl font-bold text-white">Create an account</h1>
+  <p class="mt-2 text-sm text-zinc-400">Rate films and the recommender learns what you like.</p>
+
+  <form method="POST" class="mt-6 space-y-4">
+    {{ form.hidden_tag() }}
+    {% for item in [form.username, form.email, form.password, form.confirm_pswd] %}
+    <div>
+      {{ item.label(class="text-sm font-medium text-zinc-300") }}
+      {{ item(class=field) }}
+      {% for error in item.errors %}<p class="mt-1 text-xs text-rose-300">{{ error }}</p>{% endfor %}
+    </div>
+    {% endfor %}
+    <p class="text-xs text-zinc-500">
+      Passwords need 8-64 characters with an uppercase letter, a lowercase letter, a number, and a symbol.
+    </p>
+    {{ form.submit(class="w-full rounded-xl bg-amber-400 px-6 py-3 text-sm font-semibold text-zinc-950 hover:bg-amber-300") }}
+  </form>
+
+  <p class="mt-6 text-center text-sm text-zinc-400">
+    Already registered? <a class="font-semibold text-amber-300 hover:text-amber-200" href="{{ url_for('auth.login') }}">Log in</a>
+  </p>
+</div>
+{% endblock content %}

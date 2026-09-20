@@ -1,0 +1,31 @@
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.pytest_cache/
+
+# Virtual environments
+.venv/
+venv/
+env/
+
+# Local configuration and runtime data
+.env
+instance/
+*.db
+*.sqlite3
+
+# Raw MovieLens dataset (about 900 MB - download it, do not commit it)
+data/raw/*.csv
+
+# Generated during a catalog write
+data/processed/*.tmp
+
+# Editors and OS
+.vscode/*
+!.vscode/settings.json
+!.vscode/launch.json
+!.vscode/extensions.json
+.idea/
+.DS_Store
+Thumbs.db

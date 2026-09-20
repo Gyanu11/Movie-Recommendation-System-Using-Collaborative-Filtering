@@ -1,0 +1,46 @@
+{#
+  A single movie tile.
+
+  Expects a `movie` dict from Movie.as_dict(). Optional keys:
+    similarity_score  shown as a "% match" badge on recommendation grids
+    because_of        the user's own movie that triggered this recommendation
+#}
+<article class="group relative flex flex-col overflow-hidden rounded-2xl border border-white/10 bg-white/5 shadow-lg transition duration-300 hover:-translate-y-1 hover:border-amber-400/40 hover:shadow-[0_18px_40px_rgba(0,0,0,0.35)] animate-fade-up"
+         style="animation-delay: {{ (loop.index0 * 60) if loop is defined else 0 }}ms">
+  <a href="{{ url_for('main.movie_info', movie_id=movie.movie_id) }}" class="block">
+    <div class="relative aspect-[2/3] overflow-hidden bg-ink-900">
+      <img class="h-full w-full object-cover transition duration-700 group-hover:scale-105"
+           src="{{ poster(movie) }}" alt="{{ movie.title }} poster" loading="lazy"
+           onerror="this.onerror=null;this.src='{{ url_for('main.poster_placeholder', movie_id=movie.movie_id) }}'" />
+      <div class="absolute inset-0 bg-gradient-to-t from-black via-black/25 to-transparent opacity-85"></div>
+
+      {% if movie.similarity_score is defined %}
+      <span class="absolute right-3 top-3 rounded-full bg-amber-400 px-2.5 py-1 text-xs font-bold text-zinc-950 shadow-lg"
+            title="Cosine similarity between this movie and your selection">{{ '%.0f'|format(movie.similarity_score) }}% match</span>
+      {% endif %}
+
+      <div class="absolute inset-x-0 bottom-0 p-3">
+        <h3 class="line-clamp-2 text-sm font-semibold text-white sm:text-base">{{ movie.title }}</h3>
+        <p class="mt-1 flex items-center gap-2 text-xs text-zinc-300">
+          <span>{{ movie.year or 'Unknown' }}</span>
+          {% if movie.rating_avg %}
+          <span class="text-amber-300">&#9733; {{ '%.1f'|format(movie.rating_avg) }}</span>
+          {% endif %}
+        </p>
+      </div>
+    </div>
+  </a>
+
+  <div class="flex flex-1 flex-col justify-between gap-2 px-3 py-2">
+    {% if movie.because_of %}
+    <p class="line-clamp-2 text-[11px] leading-snug text-zinc-500">Because you liked <span class="text-zinc-300">{{ movie.because_of }}</span></p>
+    {% elif movie.genre_list %}
+    <p class="line-clamp-2 text-[11px] leading-snug text-zinc-500">{{ movie.genre_list[:3] | join(' · ') }}</p>
+    {% endif %}
+    <div class="flex items-center justify-between gap-2">
+      <a class="text-xs font-medium text-zinc-400 hover:text-amber-300" href="{{ url_for('main.movie_info', movie_id=movie.movie_id) }}">Details</a>
+      <button class="text-xs font-semibold text-amber-300 hover:text-amber-200" type="button"
+              data-play-trailer data-title="{{ movie.title }}" data-year="{{ movie.year }}">Trailer</button>
+    </div>
+  </div>
+</article>

@@ -1,0 +1,9 @@
+{% set active = "rounded-full bg-amber-400 px-4 py-2 text-sm font-semibold text-zinc-950" %}
+{% set idle = "rounded-full border border-white/10 px-4 py-2 text-sm font-medium text-zinc-300 hover:border-amber-400/50 hover:text-white" %}
+{% set here = request.endpoint or '' %}
+<nav class="mb-6 flex flex-wrap gap-2">
+  <a class="{{ active if here == 'admin.dashboard' else idle }}" href="{{ url_for('admin.dashboard') }}">Dashboard</a>
+  <a class="{{ active if here.startswith('admin.movie') else idle }}" href="{{ url_for('admin.movies') }}">Movies</a>
+  <a class="{{ active if here.startswith('admin.user') else idle }}" href="{{ url_for('admin.users') }}">Users</a>
+  <a class="{{ active if here.startswith('admin.watchlist') else idle }}" href="{{ url_for('admin.watchlist') }}">Watchlists</a>
+</nav>

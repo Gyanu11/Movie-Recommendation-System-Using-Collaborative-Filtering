@@ -1,0 +1,33 @@
+{% extends "layout.html" %}
+{% block content %}
+<div class="mb-6 animate-fade-up">
+  <p class="text-xs uppercase tracking-[0.25em] text-amber-300">Search</p>
+  {% if query %}
+  <h1 class="text-3xl font-bold text-white">Results for &ldquo;{{ query }}&rdquo;</h1>
+  <p class="mt-1 text-sm text-zinc-400">{{ results | length }} match{{ '' if results | length == 1 else 'es' }}</p>
+  {% else %}
+  <h1 class="text-3xl font-bold text-white">Search the catalog</h1>
+  {% endif %}
+</div>
+
+{% if results %}
+<div class="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-6">
+  {% for movie in results %}{% include "_movie_card.html" %}{% endfor %}
+</div>
+{% elif query and query | length < min_length %}
+<div class="rounded-2xl border border-sky-400/20 bg-sky-500/10 p-6 text-sky-100">
+  Type at least {{ min_length }} characters to search.
+</div>
+{% elif query %}
+<div class="rounded-2xl border border-amber-400/20 bg-amber-500/10 p-6 text-amber-100">
+  Nothing matched <strong>{{ query }}</strong>. The catalog holds the MovieLens titles with at least
+  500 ratings, so very obscure or very recent films will not be there.
+</div>
+{% else %}
+<div class="rounded-2xl border border-white/10 bg-white/5 p-6 text-sm text-zinc-400">
+  Use the search box in the header to look up any movie by title.
+</div>
+{% endif %}
+
+<a class="mt-8 inline-flex text-sm font-semibold text-zinc-300 hover:text-amber-300" href="{{ url_for('main.home') }}">&larr; Back to home</a>
+{% endblock content %}

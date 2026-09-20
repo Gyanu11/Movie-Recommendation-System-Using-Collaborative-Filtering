@@ -1,0 +1,93 @@
+{% extends "layout.html" %}
+{% block content %}
+
+{% if featured %}
+<section class="relative mb-10 overflow-hidden rounded-3xl border border-white/10 shadow-2xl">
+  <div class="relative h-[52vw] max-h-[520px] min-h-[260px]">
+    {% for movie in featured[:5] %}
+    <div data-hero-slide class="absolute inset-0 transition-opacity duration-700 {% if loop.first %}pointer-events-auto opacity-100{% else %}pointer-events-none opacity-0{% endif %}">
+      <img class="h-full w-full object-cover animate-kenburns" src="{{ poster(movie) }}" alt="{{ movie.title }}" />
+      <div class="absolute inset-0 bg-gradient-to-r from-black via-black/75 to-black/20"></div>
+      <div class="absolute inset-0 flex flex-col justify-end p-6 sm:p-10">
+        <p class="text-xs uppercase tracking-[0.25em] text-amber-300">Highest rated on MovieLens</p>
+        <h1 class="mt-2 max-w-xl text-3xl font-extrabold text-white sm:text-5xl">{{ movie.title }}</h1>
+        <p class="mt-3 flex flex-wrap items-center gap-3 text-sm text-zinc-300">
+          <span>{{ movie.year }}</span>
+          <span class="text-zinc-600">|</span>
+          {% with value = movie.rating_avg, label = '%.2f out of 5'|format(movie.rating_avg) %}{% include "_stars.html" %}{% endwith %}
+          <span>{{ '%.2f'|format(movie.rating_avg) }} from {{ '{:,}'.format(movie.rating_count) }} ratings</span>
+        </p>
+        <p class="mt-2 max-w-lg text-sm text-zinc-400">{{ movie.genre_list | join(' · ') }}</p>
+        <div class="mt-5 flex flex-wrap gap-3">
+          <button class="rounded-full bg-amber-400 px-5 py-2.5 text-sm font-semibold text-zinc-950 hover:bg-amber-300" type="button"
+                  data-play-trailer data-title="{{ movie.title }}" data-year="{{ movie.year }}">Watch trailer</button>
+          <a class="rounded-full border border-white/20 px-5 py-2.5 text-sm font-semibold text-white hover:border-amber-400"
+             href="{{ url_for('main.movie_info', movie_id=movie.movie_id) }}">View details</a>
+        </div>
+      </div>
+    </div>
+    {% endfor %}
+  </div>
+  <div class="absolute bottom-4 left-1/2 z-10 flex -translate-x-1/2 gap-2">
+    {% for movie in featured[:5] %}
+    <button data-hero-dot class="hero-dot h-2.5 w-2.5 rounded-full bg-white/40 transition {% if loop.first %}active{% endif %}" type="button" aria-label="Show slide {{ loop.index }}"></button>
+    {% endfor %}
+  </div>
+</section>
+{% else %}
+<section class="mb-10 rounded-3xl border border-amber-400/30 bg-amber-500/10 p-8 text-amber-100">
+  <h1 class="text-2xl font-bold">The catalog is empty</h1>
+  <p class="mt-2 text-sm">Run <code class="rounded bg-black/40 px-2 py-0.5">python scripts/build_model.py</code> to generate
+     <code class="rounded bg-black/40 px-2 py-0.5">data/processed/movies.csv</code> from the MovieLens dataset.</p>
+</section>
+{% endif %}
+
+{% if current_user.is_authenticated and personal %}
+<section class="mb-12">
+  <div class="mb-5 flex flex-wrap items-end justify-between gap-3">
+    <div>
+      <p class="text-xs uppercase tracking-[0.2em] text-amber-300">
+        {% if personal_is_fallback %}Popular right now{% else %}Picked for you{% endif %}
+      </p>
+      <h2 class="text-2xl font-bold text-white sm:text-3xl">
+        {% if personal_is_fallback %}Start here{% else %}Recommended for you{% endif %}
+      </h2>
+      <p class="mt-1 text-sm text-zinc-400">
+        {% if personal_is_fallback %}
+          Rate a few movies and this row switches to collaborative-filtering picks based on your taste.
+        {% else %}
+          From people whose ratings look like yours.
+        {% endif %}
+      </p>
+    </div>
+    <a class="text-sm font-semibold text-amber-300 hover:text-amber-200" href="{{ url_for('main.for_you') }}">See all &rarr;</a>
+  </div>
+  <div class="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-5">
+    {% for movie in personal[:5] %}{% include "_movie_card.html" %}{% endfor %}
+  </div>
+</section>
+{% endif %}
+
+<section>
+  <div class="mb-5">
+    <p class="text-xs uppercase tracking-[0.2em] text-amber-300">Most watched</p>
+    <h2 class="text-2xl font-bold text-white sm:text-3xl">Trending in the dataset</h2>
+    <p class="mt-1 text-sm text-zinc-400">The titles with the most ratings across 138,000 MovieLens users.</p>
+  </div>
+  <div class="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-5">
+    {% for movie in trending %}{% include "_movie_card.html" %}{% endfor %}
+  </div>
+</section>
+
+{% if not current_user.is_authenticated %}
+<section class="mt-12 rounded-3xl border border-white/10 bg-white/5 p-8 text-center">
+  <h2 class="text-2xl font-bold text-white">Get recommendations built for you</h2>
+  <p class="mx-auto mt-2 max-w-xl text-sm text-zinc-400">
+    Create an account, rate a handful of films, and the collaborative filter will rank the whole
+    catalog against your taste.
+  </p>
+  <a class="mt-5 inline-flex rounded-full bg-amber-400 px-6 py-3 text-sm font-semibold text-zinc-950 hover:bg-amber-300"
+     href="{{ url_for('auth.register') }}">Create a free account</a>
+</section>
+{% endif %}
+{% endblock content %}
