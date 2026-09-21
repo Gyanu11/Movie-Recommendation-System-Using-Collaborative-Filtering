@@ -7,7 +7,7 @@ filtering with cosine similarity**, trained on the **MovieLens 20M** dataset
 Unlike a content-based recommender, which compares plot summaries or genres,
 this system learns from behaviour: two movies are similar when the same people
 tended to rate them the same way. The result is that *The Dark Knight* leads to
-*Batman Begins*, *Inception* and *The Prestige* — a connection no genre tag
+*Batman Begins*, *Inception* and *The Prestige*  a connection no genre tag
 would ever produce.
 
 
