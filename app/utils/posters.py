@@ -2,13 +2,11 @@
 Poster artwork.
 
 MovieLens ships ids and ratings, not images. Roughly 13% of the catalog has a
-real poster URL carried over in `movies.csv`; `scripts/fetch_posters.py` can
-fill in the rest from TMDB if you supply an API key.
+real poster URL carried over in `movies.csv`.
 
 Everything else gets a generated placeholder: a deterministic gradient card
 built from the movie's own id, with its title and year set in the site's
-typeface. It renders instantly, needs no network, and looks like part of the
-design rather than a broken image icon.
+typeface.
 """
 from __future__ import annotations
 

@@ -1,9 +1,5 @@
 """
 Flask-WTF forms.
-
-Validation rules live in one place at the top of the module so that the public
-registration form and the admin user form cannot drift apart. `\\A` and `\\Z`
-anchor the whole value: Python's `^`/`$` would also accept a trailing newline.
 """
 from __future__ import annotations
 
@@ -30,20 +26,21 @@ from wtforms.validators import (
     NumberRange,
     Optional,
     ValidationError,
+    Regexp,
 )
-from wtforms.validators import Regexp
 
 from app.models import MAX_RATING, MIN_RATING, User
 from app.services import get_catalog
 
 USERNAME_PATTERN = r"\A[A-Za-z][A-Za-z0-9_]{1,19}\Z"
+EMAIL_PATTERN = r"(?i:\A[A-Za-z0-9.!#$%&'*+/=?^_`{|}~-]+@gmail\.com\Z)"
 PASSWORD_PATTERN = r"\A(?=.{8,64}\Z)(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[^A-Za-z0-9\s])(?!.*\s).+\Z"
 MOVIE_ID_PATTERN = r"\A[A-Za-z0-9][A-Za-z0-9_-]{0,49}\Z"
 PRINTABLE_TEXT_PATTERN = r"\A(?=.*\S)[^\x00-\x1F\x7F]+\Z"
 
 PASSWORD_MESSAGE = (
     "Password must be 8-64 characters and include an uppercase letter, "
-    "a lowercase letter, a number, and a symbol (no spaces)."
+    "a lowercase letter, a number and a symbol (no spaces)."
 )
 
 
@@ -55,9 +52,14 @@ def _strip(value):
 username_validators = [
     DataRequired(),
     Length(min=2, max=20),
-    Regexp(USERNAME_PATTERN, message="Username must start with a letter and contain only letters, numbers, or underscores."),
+    Regexp(USERNAME_PATTERN, message="Username must start with a letter and contain only letters, numbers or underscores."),
 ]
-email_validators = [DataRequired(), Length(max=120), Email(message="Enter a valid email address.")]
+email_validators = [
+    DataRequired(),
+    Length(max=120),
+    Email(),
+    Regexp(EMAIL_PATTERN, message="Email must use the @gmail.com format."),
+]
 password_validators = [DataRequired(), Regexp(PASSWORD_PATTERN, message=PASSWORD_MESSAGE)]
 printable_text = [DataRequired(), Regexp(PRINTABLE_TEXT_PATTERN, message="Enter text without control characters.")]
 
@@ -135,13 +137,13 @@ class AdminMovieForm(FlaskForm):
     """Catalog metadata editing.
 
     Rating count and average are not editable: they are measurements taken from
-    20 million MovieLens ratings, not opinions, and the trained model depends
+    20 million MovieLens ratings, not opinions and the trained model depends
     on them staying consistent with the similarity index.
     """
 
     movie_id = StringField(
         "Movie ID",
-        validators=[DataRequired(), Regexp(MOVIE_ID_PATTERN, message="Movie ID may contain only letters, numbers, hyphens, and underscores.")],
+        validators=[DataRequired(), Regexp(MOVIE_ID_PATTERN, message="Movie ID may contain only letters, numbers, hyphens and underscores.")],
         filters=[_strip],
     )
     title = StringField("Title", validators=printable_text + [Length(max=200)], filters=[_strip])

@@ -87,6 +87,15 @@
       <p class="mt-4 text-sm text-zinc-400">Your watchlist is empty. Add films from any movie page.</p>
       {% endif %}
     </section>
+
+    <section class="animate-fade-up rounded-3xl border border-rose-400/20 bg-rose-500/5 p-6 shadow-xl sm:p-8" style="animation-delay:260ms">
+      <h2 class="text-xl font-bold text-white">Delete account</h2>
+      <p class="mt-1 text-sm text-zinc-400">This permanently removes your profile, ratings and watchlist.</p>
+      <form class="mt-4" method="POST" action="{{ url_for('auth.delete_account') }}" onsubmit="return confirm('Delete your account permanently? This cannot be undone.');">
+        {{ delete_form.hidden_tag() }}
+        <button class="rounded-xl border border-rose-400/40 px-5 py-2.5 text-sm font-semibold text-rose-300 hover:bg-rose-500/10" type="submit">Delete my account</button>
+      </form>
+    </section>
   </div>
 </div>
 {% endblock content %}

@@ -9,7 +9,7 @@ from flask_login import current_user, login_required, login_user, logout_user
 from sqlalchemy import select
 
 from app.extensions import bcrypt, db
-from app.forms import LoginForm, RegistrationForm, UpdateAccount
+from app.forms import CsrfOnlyForm, LoginForm, RegistrationForm, UpdateAccount
 from app.models import User, UserRating, UserWatchlist
 from app.services import get_catalog
 from app.utils.media import save_profile_picture
@@ -82,6 +82,22 @@ def logout():
     return redirect(url_for("main.home"))
 
 
+@auth_bp.route("/account/delete", methods=["POST"])
+@login_required
+def delete_account():
+    form = CsrfOnlyForm()
+    if not form.validate_on_submit():
+        flash("Your account could not be deleted. Please try again.", "danger")
+        return redirect(url_for("auth.account"))
+
+    user = db.session.get(User, current_user.id)
+    db.session.delete(user)
+    db.session.commit()
+    logout_user()
+    flash("Your account has been deleted.", "success")
+    return redirect(url_for("main.home"))
+
+
 @auth_bp.route("/account", methods=["GET", "POST"])
 @login_required
 def account():
@@ -135,6 +151,7 @@ def account():
         "account.html",
         title="Account",
         form=form,
+        delete_form=CsrfOnlyForm(),
         image_file=url_for("static", filename=f"profile_pics/{current_user.image_file}"),
         timestamp=int(datetime.now(timezone.utc).timestamp()),
         watchlist=watchlist,

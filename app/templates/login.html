@@ -15,7 +15,10 @@
     </div>
     <div>
       {{ form.password.label(class="text-sm font-medium text-zinc-300") }}
-      {{ form.password(class=field, autocomplete="current-password") }}
+      <div class="relative">
+        {{ form.password(class=field ~ " pr-16", autocomplete="current-password", id="login-password") }}
+        <button class="absolute inset-y-0 right-3 text-xs font-semibold text-amber-300 hover:text-amber-200" type="button" data-password-toggle="login-password" aria-controls="login-password" aria-label="Show password">Show</button>
+      </div>
       {% for error in form.password.errors %}<p class="mt-1 text-xs text-rose-300">{{ error }}</p>{% endfor %}
     </div>
     <label class="flex items-center gap-3 text-sm text-zinc-300">

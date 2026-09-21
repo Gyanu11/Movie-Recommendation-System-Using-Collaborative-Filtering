@@ -3,7 +3,7 @@
 
   Expects a `movie` dict from Movie.as_dict(). Optional keys:
     similarity_score  shown as a "% match" badge on recommendation grids
-    because_of        the user's own movie that triggered this recommendation
+    because of the user's own movie that triggered this recommendation
 #}
 <article class="group relative flex flex-col overflow-hidden rounded-2xl border border-white/10 bg-white/5 shadow-lg transition duration-300 hover:-translate-y-1 hover:border-amber-400/40 hover:shadow-[0_18px_40px_rgba(0,0,0,0.35)] animate-fade-up"
          style="animation-delay: {{ (loop.index0 * 60) if loop is defined else 0 }}ms">

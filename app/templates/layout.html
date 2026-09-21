@@ -228,6 +228,17 @@
 
       document.addEventListener('keydown', (e) => { if (e.key === 'Escape') closeTrailer(); });
 
+      document.querySelectorAll('[data-password-toggle]').forEach((toggle) => {
+        toggle.addEventListener('click', () => {
+          const input = document.getElementById(toggle.dataset.passwordToggle);
+          if (!input) return;
+          const showing = input.type === 'text';
+          input.type = showing ? 'password' : 'text';
+          toggle.textContent = showing ? 'Show' : 'Hide';
+          toggle.setAttribute('aria-label', showing ? 'Show password' : 'Hide password');
+        });
+      });
+
       const slides = document.querySelectorAll('[data-hero-slide]');
       const dots = document.querySelectorAll('[data-hero-dot]');
       let heroIndex = 0;

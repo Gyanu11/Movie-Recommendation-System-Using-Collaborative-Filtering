@@ -9,10 +9,20 @@
 
   <form method="POST" class="mt-6 space-y-4">
     {{ form.hidden_tag() }}
-    {% for item in [form.username, form.email, form.password, form.confirm_pswd] %}
+    {% for item in [form.username, form.email] %}
     <div>
       {{ item.label(class="text-sm font-medium text-zinc-300") }}
       {{ item(class=field) }}
+      {% for error in item.errors %}<p class="mt-1 text-xs text-rose-300">{{ error }}</p>{% endfor %}
+    </div>
+    {% endfor %}
+    {% for item, input_id, label in [(form.password, "register-password", "Show password"), (form.confirm_pswd, "register-confirm-password", "Show confirmation password")] %}
+    <div>
+      {{ item.label(class="text-sm font-medium text-zinc-300") }}
+      <div class="relative">
+        {{ item(class=field ~ " pr-16", id=input_id) }}
+        <button class="absolute inset-y-0 right-3 text-xs font-semibold text-amber-300 hover:text-amber-200" type="button" data-password-toggle="{{ input_id }}" aria-controls="{{ input_id }}" aria-label="{{ label }}">Show</button>
+      </div>
       {% for error in item.errors %}<p class="mt-1 text-xs text-rose-300">{{ error }}</p>{% endfor %}
     </div>
     {% endfor %}
