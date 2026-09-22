@@ -1,9 +1,5 @@
 """
-Shared extension instances.
-
-They live in their own module (rather than in `app/__init__.py`) so that
-models, forms, and views can import them without importing the application
-factory, which would create a circular import.
+Shared Flask extensions kept separate to avoid circular imports.
 """
 from flask_bcrypt import Bcrypt
 from flask_login import LoginManager

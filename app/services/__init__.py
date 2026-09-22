@@ -1,12 +1,8 @@
 """
-Service layer.
-
-The catalog and the recommendation engine are expensive to build (a CSV parse
-and a NumPy load) but completely read-only afterwards, so exactly one of each
-is created per application and stored on `app.extensions`. Views reach them
-through `get_catalog()` / `get_engine()` rather than importing a module-level
-global, which keeps the app testable: each test builds its own instance.
+Service layer that creates and stores the movie catalog and recommendation
+engine once per application for efficient and testable access.
 """
+
 from __future__ import annotations
 
 from flask import Flask, current_app

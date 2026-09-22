@@ -1,4 +1,5 @@
 """Public browsing, search, recommendations, watchlist and ratings."""
+
 from __future__ import annotations
 
 from flask import (
@@ -30,16 +31,9 @@ main_bp = Blueprint("main", __name__)
 _POSTER_CACHE_SECONDS = 60 * 60 * 24 * 30
 
 
-# --------------------------------------------------------------------------- #
 # Helpers
-# --------------------------------------------------------------------------- #
 def _safe_redirect(fallback_endpoint: str = "main.home"):
-    """Redirect back where the user came from, but only within this site.
-
-    Trusting `request.referrer` blindly lets an attacker bounce a logged-in
-    user to an external page after a state-changing POST, so anything that is
-    not a same-host relative path falls back to a known-good endpoint.
-    """
+    """Safely redirect the user to a same-site URL or a trusted fallback."""
     referrer = request.referrer or ""
     if referrer.startswith(request.host_url):
         return redirect(referrer)
@@ -73,9 +67,7 @@ def _personal_recommendations(user_id: int, limit: int) -> tuple[list[dict], boo
     return [movie.as_dict() for movie in popular], True
 
 
-# --------------------------------------------------------------------------- #
 # Browsing
-# --------------------------------------------------------------------------- #
 @main_bp.route("/")
 @main_bp.route("/home")
 def home():
@@ -163,9 +155,7 @@ def search():
     )
 
 
-# --------------------------------------------------------------------------- #
 # Recommendations
-# --------------------------------------------------------------------------- #
 @main_bp.route("/recommender", methods=["GET", "POST"])
 @login_required
 def recommender():
@@ -213,9 +203,7 @@ def suggest():
     return jsonify([{"movie_id": m.movie_id, "title": m.title, "year": m.year} for m in matches])
 
 
-# --------------------------------------------------------------------------- #
 # Watchlist and ratings
-# --------------------------------------------------------------------------- #
 @main_bp.route("/watchlist/add/<movie_id>", methods=["POST"])
 @login_required
 def add_to_watchlist(movie_id):
@@ -300,9 +288,7 @@ def rate_movie(movie_id):
     return _safe_redirect()
 
 
-# --------------------------------------------------------------------------- #
 # Media helpers
-# --------------------------------------------------------------------------- #
 @main_bp.route("/poster/<movie_id>.svg")
 def poster_placeholder(movie_id):
     """Generated poster artwork for movies with no image URL."""

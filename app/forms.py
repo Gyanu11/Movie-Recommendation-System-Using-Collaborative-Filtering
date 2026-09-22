@@ -40,7 +40,7 @@ PRINTABLE_TEXT_PATTERN = r"\A(?=.*\S)[^\x00-\x1F\x7F]+\Z"
 
 PASSWORD_MESSAGE = (
     "Password must be 8-64 characters and include an uppercase letter, "
-    "a lowercase letter, a number and a symbol (no spaces)."
+    "a lowercase letter, a number and a special symbol (no spaces)."
 )
 
 
@@ -65,11 +65,7 @@ printable_text = [DataRequired(), Regexp(PRINTABLE_TEXT_PATTERN, message="Enter 
 
 
 class _UniqueUserFieldsMixin:
-    """Shared uniqueness checks for username and email.
-
-    Subclasses set `original_username` / `original_email` so that editing an
-    account without changing its name does not trip the "already taken" rule.
-    """
+    """Provides reusable username and email uniqueness validation."""
 
     original_username: str | None = None
     original_email: str | None = None
@@ -134,12 +130,8 @@ class RatingForm(FlaskForm):
 
 
 class AdminMovieForm(FlaskForm):
-    """Catalog metadata editing.
-
-    Rating count and average are not editable: they are measurements taken from
-    20 million MovieLens ratings, not opinions and the trained model depends
-    on them staying consistent with the similarity index.
-    """
+    """Edits catalog metadata while keeping 20 million MovieLens rating and statistics consistent
+    for similarity index."""
 
     movie_id = StringField(
         "Movie ID",
