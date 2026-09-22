@@ -67,6 +67,7 @@ PROCESSED_DIR = PROJECT_ROOT / "data" / "processed"
 # 500+ ratings keeps ~4,500 well-known films out of MovieLens' 27,000.
 DEFAULT_MIN_RATINGS = 500
 DEFAULT_NEIGHBOURS = 50
+DEFAULT_CONTENT_NEIGHBOURS = 50
 DEFAULT_KEYWORDS = 12
 GENOME_RELEVANCE_FLOOR = 0.5
 RATING_CHUNK_ROWS = 4_000_000  # keeps peak memory near 400 MB
@@ -275,6 +276,44 @@ def build_similarity(
     return neighbour_rows, np.clip(neighbour_scores, 0.0, 1.0)
 
 
+def build_content_similarity(catalog: pd.DataFrame, neighbours: int) -> tuple[np.ndarray, np.ndarray]:
+    """Build TF-IDF cosine neighbours from each movie's genres and keywords."""
+    documents = (catalog["genres"].fillna("") + " " + catalog["keywords"].fillna("")).str.lower()
+    vocabulary: dict[str, int] = {}
+    rows: list[dict[int, int]] = []
+    for document in documents:
+        counts: dict[int, int] = {}
+        for token in re.findall(r"[a-z0-9']+", document):
+            column = vocabulary.setdefault(token, len(vocabulary))
+            counts[column] = counts.get(column, 0) + 1
+        rows.append(counts)
+
+    data, row_index, column_index = [], [], []
+    document_frequency = np.zeros(len(vocabulary), dtype=np.float32)
+    for row, counts in enumerate(rows):
+        for column, count in counts.items():
+            row_index.append(row)
+            column_index.append(column)
+            data.append(float(count))
+            document_frequency[column] += 1
+    matrix = sp.csr_matrix((data, (row_index, column_index)), shape=(len(rows), len(vocabulary)), dtype=np.float32)
+    if matrix.shape[1]:
+        matrix = matrix.multiply(np.log((1 + len(rows)) / (1 + document_frequency)) + 1)
+    norms = np.sqrt(np.asarray(matrix.multiply(matrix).sum(axis=1)).ravel())
+    norms[norms == 0] = 1.0
+    matrix = matrix.multiply((1.0 / norms)[:, None])
+    similarity = (matrix @ matrix.T).toarray()
+    np.fill_diagonal(similarity, -np.inf)
+    k = min(neighbours, max(len(rows) - 1, 1))
+    top = np.argpartition(-similarity, kth=k - 1, axis=1)[:, :k]
+    top_scores = np.take_along_axis(similarity, top, axis=1)
+    order = np.argsort(-top_scores, axis=1)
+    return (
+        np.take_along_axis(top, order, axis=1).astype(np.int32),
+        np.clip(np.take_along_axis(top_scores, order, axis=1), 0.0, 1.0).astype(np.float32),
+    )
+
+
 # --------------------------------------------------------------------------- #
 # Entry point
 # --------------------------------------------------------------------------- #
@@ -284,6 +323,8 @@ def parse_args(argv=None) -> argparse.Namespace:
                         help=f"drop movies with fewer ratings (default: {DEFAULT_MIN_RATINGS})")
     parser.add_argument("--neighbours", type=int, default=DEFAULT_NEIGHBOURS,
                         help=f"neighbours stored per movie (default: {DEFAULT_NEIGHBOURS})")
+    parser.add_argument("--content-neighbours", type=int, default=DEFAULT_CONTENT_NEIGHBOURS,
+                        help=f"content neighbours stored per movie (default: {DEFAULT_CONTENT_NEIGHBOURS})")
     parser.add_argument("--keywords", type=int, default=DEFAULT_KEYWORDS,
                         help=f"genome tags kept per movie (default: {DEFAULT_KEYWORDS})")
     parser.add_argument("--raw-dir", type=Path, default=RAW_DIR)
@@ -352,6 +393,15 @@ def main(argv=None) -> int:
     ]]
     catalog.to_csv(out_dir / "movies.csv", index=False)
 
+    log.info("Building TF-IDF content similarity")
+    content_rows, content_scores = build_content_similarity(catalog, args.content_neighbours)
+    np.savez_compressed(
+        out_dir / "content_similarity.npz",
+        movie_ids=keep_ids,
+        neighbour_ids=keep_ids[content_rows],
+        neighbour_scores=content_scores,
+    )
+
     np.savez_compressed(
         out_dir / "item_similarity.npz",
         movie_ids=keep_ids,
@@ -360,7 +410,9 @@ def main(argv=None) -> int:
     )
 
     meta = {
-        "algorithm": "item-based collaborative filtering (adjusted cosine similarity)",
+        "algorithm": "hybrid collaborative filtering and content-based filtering",
+        "collaborative_algorithm": "item-based collaborative filtering (adjusted cosine similarity)",
+        "content_algorithm": "TF-IDF genres and keywords (cosine similarity)",
         "dataset": "MovieLens 20M",
         "built_at": datetime.now(timezone.utc).isoformat(timespec="seconds"),
         "movies": int(len(catalog)),
@@ -368,6 +420,7 @@ def main(argv=None) -> int:
         "ratings_used": int(catalog["rating_count"].sum()),
         "min_ratings_per_movie": int(args.min_ratings),
         "neighbours_per_movie": int(neighbour_scores.shape[1]),
+        "content_neighbours_per_movie": int(content_scores.shape[1]),
         "build_seconds": round(time.perf_counter() - started, 1),
     }
     (out_dir / "model_meta.json").write_text(json.dumps(meta, indent=2) + "\n", encoding="utf-8")

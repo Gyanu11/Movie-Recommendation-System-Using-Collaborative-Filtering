@@ -1,11 +1,14 @@
 {
-  "algorithm": "item-based collaborative filtering (adjusted cosine similarity)",
+  "algorithm": "hybrid collaborative filtering and content-based filtering",
+  "collaborative_algorithm": "item-based collaborative filtering (adjusted cosine similarity)",
+  "content_algorithm": "TF-IDF genres and keywords (cosine similarity)",
   "dataset": "MovieLens 20M",
-  "built_at": "2026-09-19T08:45:06+00:00",
+  "built_at": "2026-09-22T04:10:02+00:00",
   "movies": 4489,
   "users": 138493,
   "ratings_used": 18717467,
   "min_ratings_per_movie": 500,
   "neighbours_per_movie": 50,
-  "build_seconds": 60.2
+  "content_neighbours_per_movie": 50,
+  "build_seconds": 66.5
 }

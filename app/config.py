@@ -74,6 +74,7 @@ class Config:
     DATA_DIR = _env_path("DATA_DIR", BASE_DIR / "data" / "processed")
     MOVIES_CSV = DATA_DIR / "movies.csv"
     SIMILARITY_NPZ = DATA_DIR / "item_similarity.npz"
+    CONTENT_SIMILARITY_NPZ = DATA_DIR / "content_similarity.npz"
     MODEL_META_JSON = DATA_DIR / "model_meta.json"
 
     # --- Uploads --------------------------------------------------------
