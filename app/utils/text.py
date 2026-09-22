@@ -1,9 +1,6 @@
 """
-Text normalisation used by catalog search.
-
-Both helpers are called thousands of times per search, so results are memoised
-with an LRU cache. The catalog has a few thousand distinct titles, which fits
-comfortably inside the cache and makes repeat lookups free.
+Provides text normalization for catalog search with LRU caching for faster
+repeated lookups.
 """
 from __future__ import annotations
 
@@ -20,10 +17,8 @@ STOP_WORDS = frozenset({"a", "an", "the", "of", "and", "or", "in", "on", "to"})
 
 @lru_cache(maxsize=8192)
 def normalise(value: str) -> str:
-    """Lowercase, strip accents and punctuation, collapse whitespace.
-
-    'Amélie (Le Fabuleux Destin...)' and 'amelie le fabuleux destin' both
-    reduce to the same comparable string.
+    """Lowercase, strip accents and punctuation with collapse whitespace.
+    which reduce to the same comparable string.
     """
     if not value:
         return ""

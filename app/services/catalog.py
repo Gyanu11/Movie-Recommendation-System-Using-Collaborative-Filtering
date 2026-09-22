@@ -38,8 +38,7 @@ CSV_COLUMNS = [
 ]
 
 # Scores used by `search()`, all on a single 0-1000 scale so that a threshold
-# means the same thing whichever branch produced the score. Ordered bands keep
-# an exact title above a prefix, a prefix above a substring, and so on.
+# means the same thing whichever branch produced the score.
 _SCORE_EXACT_TITLE = 1000.0
 _SCORE_TITLE_PREFIX = 800.0
 _SCORE_TITLE_SUBSTRING = 600.0
@@ -131,9 +130,7 @@ class MovieCatalog:
         self._token_index: dict[str, set[str]] = {}
         self._load(force=True)
 
-    # ------------------------------------------------------------------ #
     # Loading and indexing
-    # ------------------------------------------------------------------ #
     def _current_mtime(self) -> float | None:
         try:
             return self.movies_csv.stat().st_mtime
@@ -190,9 +187,7 @@ class MovieCatalog:
         """Force a re-read. Called after any admin write."""
         self._load(force=True)
 
-    # ------------------------------------------------------------------ #
     # Reads
-    # ------------------------------------------------------------------ #
     def __len__(self) -> int:
         self._load()
         return len(self._movies)
@@ -262,20 +257,15 @@ class MovieCatalog:
             found.update(movie.genre_list)
         return sorted(found)
 
-    # ------------------------------------------------------------------ #
     # Search
-    # ------------------------------------------------------------------ #
     def search(self, query: str, limit: int = 24) -> list[Movie]:
         """Rank catalog titles against a free-text query."""
         return [movie for movie, _ in self.search_scored(query, limit)]
 
     def search_scored(self, query: str, limit: int = 24) -> list[tuple[Movie, float]]:
         """Rank catalog titles, returning each match with its score.
-
-        The previous implementation ran `fuzzywuzzy.partial_ratio` five times
-        per row over every row, for every query. This version narrows to a
-        candidate set with an inverted token index first, and only reaches for
-        fuzzy matching when the index misses - which is exactly where typo
+        This version narrows to a candidate set with an inverted token 
+        index first, and only reaches for fuzzy matching when the index misses - which is exactly where typo
         tolerance is needed and nowhere else.
         """
         self._load()
@@ -288,10 +278,8 @@ class MovieCatalog:
 
         if not scores:
             # Nothing matched literally, so try correcting each query word
-            # against the vocabulary of words that actually appear in titles.
-            # Fixing "matrx" to "matrix" and reusing the index is far cheaper
-            # and more accurate than comparing the query against all 4,500
-            # titles character by character.
+            # against the vocabulary of words that actually appear in titles and comparing the query against 
+            # all 4,500 titles character by character.
             corrected, confidence = self._correct_tokens(tokens)
             if corrected:
                 scores = self._score_candidates(needle, corrected, penalty=confidence)
@@ -336,11 +324,7 @@ class MovieCatalog:
         return scores
 
     def _correct_tokens(self, tokens: frozenset[str]) -> tuple[frozenset[str], float]:
-        """Map misspelled query words onto real title words.
-
-        Returns the corrected tokens and a 0-1 confidence, which discounts the
-        resulting scores so a corrected match never outranks a literal one.
-        """
+        """Correct misspelled query words and return corrected tokens with confidence."""
         vocabulary = list(self._token_index)
         corrected: set[str] = set()
         confidences: list[float] = []
@@ -402,9 +386,7 @@ class MovieCatalog:
         matches.sort(key=lambda m: m.rating_count, reverse=True)
         return matches[:limit]
 
-    # ------------------------------------------------------------------ #
     # Writes (admin CRUD)
-    # ------------------------------------------------------------------ #
     def create(self, movie: Movie) -> Movie:
         with self._lock:
             if self.exists(movie.movie_id):
@@ -442,10 +424,8 @@ class MovieCatalog:
             return True
 
     def _write_all(self, movies: list[Movie]) -> None:
-        """Rewrite `movies.csv` atomically, then refresh the in-memory copy.
-
-        Writing to a temporary file and replacing it means a crash mid-write
-        can never leave a half-written catalog on disk.
+        """Rewrite `movies.csv` atomically, then refresh the in-memory copy so that
+        it reflects the updated data.
         """
         self.movies_csv.parent.mkdir(parents=True, exist_ok=True)
         temporary = self.movies_csv.with_suffix(".csv.tmp")

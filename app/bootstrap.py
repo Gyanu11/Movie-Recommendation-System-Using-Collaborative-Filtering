@@ -1,15 +1,8 @@
 """
-First-run setup.
-
-Runs once per application start: create any missing tables, guarantee a default
-admin account exists, and drop watchlist/rating rows that point at movies the
-current catalog no longer contains.
-
-That last step matters after a dataset change. This project previously used a
-1,000-row IMDb catalog whose ids were unrelated to MovieLens ids, so carrying
-those rows forward would silently attach a user's saved films to whatever
-MovieLens movie happened to share the number.
+First-run setup that creates missing tables, ensures a default admin account
+and removes outdated watchlist/rating records after catalog changes.
 """
+
 from __future__ import annotations
 
 import logging

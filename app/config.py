@@ -1,19 +1,8 @@
 """
-Application configuration.
-
-Every value can be overridden with an environment variable (see `.env.example`).
-The defaults are chosen so that `python run.py` works on a fresh clone without
-any configuration at all, while still failing loudly if the app is started in
-production mode with the development secret key still in place.
-
-Two rules make the `.env` file safe to edit by hand:
-
-* A variable that is present but blank (for example `DATA_DIR=`) is treated
-  exactly like a variable that is absent, so the built-in default applies.
-* Relative paths (for example `DATA_DIR=data/processed`) are resolved against
-  the project folder, never against whichever directory the shell happens to
-  be in.
+Application configuration with environment variable overrides and safe default
+path handling for development and production.
 """
+
 from __future__ import annotations
 
 import os
@@ -25,7 +14,7 @@ BASE_DIR = Path(__file__).resolve().parents[1]
 DEV_SECRET_KEY = "dev-only-insecure-secret-key"
 
 # `.env` is read here, at the top of the module that consumes it, rather than
-# in `app/__init__.py`. The Config class below reads os.environ while the class
+# in `app/__init__.py`. The Config class below reads os.environment while the class
 # body executes (i.e. at import time), so the file has to be loaded first no
 # matter which module happens to import `app.config`. Variables already set in
 # the real environment win over the file (override=False).
@@ -58,18 +47,18 @@ def _env_path(name: str, default: Path) -> Path:
 class Config:
     """Settings shared by every environment."""
 
-    # --- Security -------------------------------------------------------
+    #Security
     SECRET_KEY = _env_str("SECRET_KEY", DEV_SECRET_KEY)
     SESSION_COOKIE_HTTPONLY = True
     SESSION_COOKIE_SAMESITE = "Lax"
 
-    # --- Database -------------------------------------------------------
+    #Database
     SQLALCHEMY_DATABASE_URI = _env_str(
         "DATABASE_URL", f"sqlite:///{BASE_DIR / 'instance' / 'site.db'}"
     )
     SQLALCHEMY_TRACK_MODIFICATIONS = False
 
-    # --- Dataset --------------------------------------------------------
+    #Dataset
     # `data/processed` holds the artifacts produced by scripts/build_model.py.
     DATA_DIR = _env_path("DATA_DIR", BASE_DIR / "data" / "processed")
     MOVIES_CSV = DATA_DIR / "movies.csv"
@@ -77,12 +66,12 @@ class Config:
     CONTENT_SIMILARITY_NPZ = DATA_DIR / "content_similarity.npz"
     MODEL_META_JSON = DATA_DIR / "model_meta.json"
 
-    # --- Uploads --------------------------------------------------------
+    #Uploads
     PROFILE_PIC_FOLDER = BASE_DIR / "app" / "static" / "profile_pics"
     PROFILE_PIC_SIZE = (125, 125)
     MAX_CONTENT_LENGTH = 4 * 1024 * 1024  # reject uploads larger than 4 MB
 
-    # --- Behaviour ------------------------------------------------------
+    #Behaviour
     WATCHLIST_MAX_ITEMS = _env_int("WATCHLIST_MAX_ITEMS", 20)
     SEARCH_MIN_QUERY_LENGTH = _env_int("SEARCH_MIN_QUERY_LENGTH", 2)
     SEARCH_RESULT_LIMIT = _env_int("SEARCH_RESULT_LIMIT", 24)
@@ -91,9 +80,9 @@ class Config:
     HOMEPAGE_FEATURED_COUNT = _env_int("HOMEPAGE_FEATURED_COUNT", 15)
     ADMIN_PAGE_SIZE = _env_int("ADMIN_PAGE_SIZE", 25)
 
-    # --- Default admin account (created on first run if missing) --------
+    #Default admin account (created on first run if missing)
     ADMIN_USERNAME = _env_str("ADMIN_USERNAME", "admin")
-    ADMIN_EMAIL = _env_str("ADMIN_EMAIL", "admin@moviehub.com")
+    ADMIN_EMAIL = _env_str("ADMIN_EMAIL", "admin@gmail.com")
     ADMIN_PASSWORD = _env_str("ADMIN_PASSWORD", "Admin123!")
 
 

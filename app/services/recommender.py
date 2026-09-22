@@ -1,33 +1,10 @@
 """
-Hybrid item-based collaborative filtering and content-based filtering.
-
-This module is the serving half of the recommender. The learning half lives in
-`scripts/build_model.py`, which reads 20 million MovieLens ratings and writes
-out, for every movie, its top-50 most similar movies and their cosine
-similarity scores. Here those neighbour lists are loaded once and used to
-answer two questions:
-
-    "I liked X, what else?"      -> similar_to()      one seed movie
-    "What should I watch next?"  -> for_user()        a whole user profile
-
-Why item-based rather than user-based
--------------------------------------
-User-based CF compares the current user against all 138,493 MovieLens users on
-every request. Item-based CF pre-computes movie-to-movie similarity offline, so
-a request only has to add up a few dozen numbers. Item similarities are also
-far more stable over time than user similarities, which is exactly why
-production systems (Amazon's "customers who bought this") use this form.
-
-The scoring rule
-----------------
-For a user who rated movies R, the predicted interest in a candidate movie c is
-
-    score(c) = sum over i in R of  sim(i, c) * weight(r_i)
-
-where `weight` centres the user's rating on the midpoint of the scale, so a
-5-star rating pulls a candidate up and a 1-star rating pushes it down. Movies
-the user has already rated or watchlisted are removed before ranking.
+Hybrid item-based collaborative and content-based recommendation engine.
+Precomputed movie similarities are used to recommend movies similar to a
+selected movie or based on a user's ratings, while excluding already rated
+or watchlisted movies.
 """
+
 from __future__ import annotations
 
 import json
@@ -67,17 +44,7 @@ class Recommendation:
 
 
 class SimilarityIndex:
-    """Read-only access to the neighbour lists in `item_similarity.npz`.
-
-    The file stores three parallel arrays:
-        movie_ids         (n,)     row order
-        neighbour_ids     (n, K)   the K most similar movies, best first
-        neighbour_scores  (n, K)   their cosine similarities
-
-    Storing only the top K instead of the full n x n matrix takes the model
-    from roughly 80 MB to under 2 MB with no effect on the top-N results the
-    app serves.
-    """
+    """Read-only access to the neighbour lists in `item_similarity.npz`."""
 
     def __init__(self, npz_path: str | Path, meta_path: str | Path | None = None):
         self.npz_path = Path(npz_path)
@@ -194,9 +161,7 @@ class RecommendationEngine:
                 scores[neighbour_id] = scores.get(neighbour_id, 0.0) + 0.3 * score
         return dict(sorted(scores.items(), key=lambda item: item[1], reverse=True))
 
-    # ------------------------------------------------------------------ #
     # "More like this"
-    # ------------------------------------------------------------------ #
     def similar_to(self, movie_id, limit: int = 12) -> list[Recommendation]:
         """Movies whose audiences overlap most with the given movie's."""
         neighbours = self._neighbours(movie_id, limit=limit)
@@ -229,25 +194,15 @@ class RecommendationEngine:
             raise ColdStartError(seed)
         return seed, results
 
-    # ------------------------------------------------------------------ #
     # "Recommended for you"
-    # ------------------------------------------------------------------ #
     def for_user(
         self,
         ratings: Mapping[str, float],
         watchlist: Sequence[str] = (),
         limit: int = 12,
     ) -> list[Recommendation]:
-        """Rank the catalog against one user's ratings and watchlist.
-
-        Args:
-            ratings: movie_id -> star rating the user gave it.
-            watchlist: movie ids saved but not rated, treated as a weak "like".
-            limit: how many recommendations to return.
-
-        Returns an empty list when the profile is empty; callers fall back to
-        popularity in that case.
-        """
+        """Generate recommendations from a user's ratings and watchlist, or return an empty list 
+        for an empty profile."""
         profile = self._build_profile(ratings, watchlist)
         if not profile:
             return []
@@ -272,13 +227,9 @@ class RecommendationEngine:
                         source_title = source.title if source else ""
                     best_source[neighbour_id] = (contribution, source_title)
 
-        # Divide by the total weight in the profile. That is a constant for
-        # this user, so it cannot change the ranking, but it keeps the score in
-        # 0-1 and comparable between users with different numbers of ratings.
-        #
-        # Dividing by each candidate's own accumulated weight instead - the
-        # textbook prediction formula - would collapse every candidate reached
-        # by a single movie to exactly 1.0 and destroy the ordering.
+
+       # Normalize scores by the user's total profile weight to keep them comparable
+       # across users without changing the recommendation ranking.
         divisor = sum(abs(weight) for weight in profile.values()) or 1.0
 
         scored = [
