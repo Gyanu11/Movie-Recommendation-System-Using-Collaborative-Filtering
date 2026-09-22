@@ -17,6 +17,7 @@ from app.services.recommender import (
     Recommendation,
     RecommendationEngine,
     SimilarityIndex,
+    ContentSimilarityIndex,
     to_dicts,
 )
 
@@ -27,6 +28,7 @@ __all__ = [
     "Recommendation",
     "RecommendationEngine",
     "SimilarityIndex",
+    "ContentSimilarityIndex",
     "get_catalog",
     "get_engine",
     "init_services",
@@ -38,7 +40,8 @@ def init_services(app: Flask) -> RecommendationEngine:
     """Build the catalog and engine once, at application start-up."""
     catalog = MovieCatalog(app.config["MOVIES_CSV"])
     index = SimilarityIndex(app.config["SIMILARITY_NPZ"], app.config["MODEL_META_JSON"])
-    engine = RecommendationEngine(catalog, index)
+    content_index = ContentSimilarityIndex(app.config["CONTENT_SIMILARITY_NPZ"])
+    engine = RecommendationEngine(catalog, index, content_index)
 
     app.extensions["movie_catalog"] = catalog
     app.extensions["recommendation_engine"] = engine

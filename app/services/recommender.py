@@ -1,5 +1,5 @@
 """
-Item-based collaborative filtering.
+Hybrid item-based collaborative filtering and content-based filtering.
 
 This module is the serving half of the recommender. The learning half lives in
 `scripts/build_model.py`, which reads 20 million MovieLens ratings and writes
@@ -140,21 +140,68 @@ class SimilarityIndex:
         return [(str(mid), float(score)) for mid, score in zip(ids, scores) if score > 0]
 
 
+class ContentSimilarityIndex:
+    """Read-only access to TF-IDF genre and keyword neighbours."""
+
+    def __init__(self, npz_path: str | Path):
+        self.npz_path = Path(npz_path)
+        self._row_of: dict[str, int] = {}
+        self._neighbour_ids: np.ndarray = np.empty((0, 0), dtype=np.int64)
+        self._neighbour_scores: np.ndarray = np.empty((0, 0), dtype=np.float32)
+        self._load()
+
+    def _load(self) -> None:
+        if not self.npz_path.exists():
+            log.warning("%s not found. Content recommendations are disabled until you run 'python scripts/build_model.py'.", self.npz_path)
+            return
+        with np.load(self.npz_path) as payload:
+            movie_ids = payload["movie_ids"]
+            self._neighbour_ids = payload["neighbour_ids"]
+            self._neighbour_scores = payload["neighbour_scores"].astype(np.float32)
+        self._row_of = {str(mid): row for row, mid in enumerate(movie_ids)}
+        log.info("Content similarity model loaded: %s movies", len(self._row_of))
+
+    @property
+    def is_ready(self) -> bool:
+        return bool(self._row_of)
+
+    def neighbours(self, movie_id, limit: int | None = None) -> list[tuple[str, float]]:
+        row = self._row_of.get(str(movie_id).strip())
+        if row is None:
+            return []
+        ids = self._neighbour_ids[row]
+        scores = self._neighbour_scores[row]
+        if limit is not None:
+            ids, scores = ids[:limit], scores[:limit]
+        return [(str(mid), float(score)) for mid, score in zip(ids, scores) if score > 0]
+
+
 class RecommendationEngine:
     """Turns the similarity index plus a user profile into ranked movies."""
 
-    def __init__(self, catalog: MovieCatalog, index: SimilarityIndex):
+    def __init__(self, catalog: MovieCatalog, index: SimilarityIndex, content_index: ContentSimilarityIndex | None = None):
         self.catalog = catalog
         self.index = index
+        self.content_index = content_index
+
+    def _neighbours(self, movie_id, limit: int) -> dict[str, float]:
+        """Blend collaborative and content similarity, preserving both signals."""
+        scores: dict[str, float] = {}
+        for neighbour_id, score in self.index.neighbours(movie_id, limit=limit * 2):
+            scores[neighbour_id] = scores.get(neighbour_id, 0.0) + 0.7 * score
+        if self.content_index and self.content_index.is_ready:
+            for neighbour_id, score in self.content_index.neighbours(movie_id, limit=limit * 2):
+                scores[neighbour_id] = scores.get(neighbour_id, 0.0) + 0.3 * score
+        return dict(sorted(scores.items(), key=lambda item: item[1], reverse=True))
 
     # ------------------------------------------------------------------ #
     # "More like this"
     # ------------------------------------------------------------------ #
     def similar_to(self, movie_id, limit: int = 12) -> list[Recommendation]:
         """Movies whose audiences overlap most with the given movie's."""
-        neighbours = self.index.neighbours(movie_id, limit=limit * 2)
+        neighbours = self._neighbours(movie_id, limit=limit)
         results: list[Recommendation] = []
-        for neighbour_id, score in neighbours:
+        for neighbour_id, score in neighbours.items():
             movie = self.catalog.get(neighbour_id)
             if movie is not None:
                 results.append(Recommendation(movie=movie, score=score))
@@ -211,7 +258,7 @@ class RecommendationEngine:
 
         for source_id, weight in profile.items():
             source_title = ""
-            for neighbour_id, similarity in self.index.neighbours(source_id):
+            for neighbour_id, similarity in self._neighbours(source_id, limit=50).items():
                 if neighbour_id in seen:
                     continue
                 contribution = similarity * weight

@@ -56,6 +56,7 @@ data/raw/*.csv  (~900 MB)
       ▼
 data/processed/movies.csv            catalog metadata      (~1 MB)
 data/processed/item_similarity.npz   top-50 neighbours     (~1.2 MB)
+data/processed/content_similarity.npz TF-IDF neighbours     (~1.2 MB)
 data/processed/model_meta.json       how it was built
 ```
 
@@ -91,6 +92,14 @@ multiplication takes about 14 seconds.
 **Step 5 — Prune.** Keep only each movie's top 50 neighbours. The full
 4,489 × 4,489 matrix is 80 MB; the top-50 lists are **1.2 MB** and give
 identical results for the top-N recommendations actually served.
+
+**Content-based model.** The builder also combines each movie's genres and
+MovieLens genome keywords into a TF-IDF vector. Cosine similarity between
+those vectors produces a second top-50 neighbour list in
+`content_similarity.npz`. At serving time, recommendations use 70% rating
+similarity and 30% content similarity. If the content artifact has not been
+generated yet, the application continues using the original collaborative
+filter by itself.
 
 ### Serving — `app/services/recommender.py`
 
@@ -304,6 +313,7 @@ Tunable parameters:
 python scripts/build_model.py --min-ratings 1000   # smaller, more popular catalog
 python scripts/build_model.py --neighbours 100     # deeper neighbour lists
 python scripts/build_model.py --keywords 20        # more tags per movie
+python scripts/build_model.py --content-neighbours 50  # content neighbours per movie
 ```
 
 The script streams `rating.csv` in chunks and peaks at roughly 1.5 GB of RAM.
