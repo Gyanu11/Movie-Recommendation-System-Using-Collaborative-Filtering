@@ -98,7 +98,6 @@ def _register_template_globals(app: Flask) -> None:
 
     def poster(movie) -> str:
         """Return a movie's poster URL or a generated placeholder if unavailable."""
-        
         if movie is None:
             return url_for("static", filename="default_movie.jpg")
         url = (movie.get("poster_url") if isinstance(movie, dict) else getattr(movie, "poster_url", "")) or ""
