@@ -1,11 +1,8 @@
 """
 Development entry point.
-
     python run.py
-
 For anything beyond local development, serve the factory through a real WSGI
 server instead:
-
     gunicorn "run:app"
 """
 from __future__ import annotations

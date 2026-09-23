@@ -105,7 +105,8 @@ def aggregate_ratings(path: Path) -> pd.DataFrame:
 
 
 def load_rating_triples(path: Path, keep_ids: np.ndarray) -> tuple[np.ndarray, np.ndarray, np.ndarray, int]:
-   """Stream ratings for selected movies and return COO matrix data with user count."""
+    """Stream ratings for selected movies and return COO matrix data with user count."""
+
 
     keep_index = pd.Index(keep_ids)
     row_of_movie = pd.Series(np.arange(len(keep_ids), dtype=np.int32), index=keep_ids)
@@ -135,8 +136,9 @@ def load_rating_triples(path: Path, keep_ids: np.ndarray) -> tuple[np.ndarray, n
 
 
 def load_keywords(path: Path, keep_ids: np.ndarray, top_n: int) -> pd.Series:
-   """Extract the top relevant tags for each movie from the MovieLens tag genome 
-      genome_scores.csv -> the `top_n` most relevant tags per movie."""
+    """Extract the top relevant tags for each movie from the MovieLens tag genome.
+    genome_scores.csv -> the `top_n` most relevant tags per movie.
+    """
 
     if not path.exists():
         log.warning("genome_scores.csv not found - movies will have no keywords")
@@ -247,7 +249,8 @@ def build_content_similarity(catalog: pd.DataFrame, neighbours: int) -> tuple[np
             data.append(float(count))
             document_frequency[column] += 1
     matrix = sp.csr_matrix((data, (row_index, column_index)), shape=(len(rows), len(vocabulary)), dtype=np.float32)
-    if matrix.shape[1]:
+    matrix_shape = matrix.shape or (0, 0)
+    if matrix_shape[1]:
         matrix = matrix.multiply(np.log((1 + len(rows)) / (1 + document_frequency)) + 1)
     norms = np.sqrt(np.asarray(matrix.multiply(matrix).sum(axis=1)).ravel())
     norms[norms == 0] = 1.0
@@ -281,12 +284,13 @@ def parse_args(argv=None) -> argparse.Namespace:
 
 
 def main(argv=None) -> int:
+    global RAW_DIR
+
     logging.basicConfig(level=logging.INFO, format="%(asctime)s  %(message)s", datefmt="%H:%M:%S")
     args = parse_args(argv)
     raw_dir, out_dir = args.raw_dir, args.out_dir
     out_dir.mkdir(parents=True, exist_ok=True)
 
-    global RAW_DIR
     RAW_DIR = raw_dir
 
     started = time.perf_counter()
@@ -375,6 +379,7 @@ def main(argv=None) -> int:
     log.info("Done in %.1fs", meta["build_seconds"])
     log.info("  %s  (%s movies)", out_dir / "movies.csv", f"{meta['movies']:,}")
     log.info("  %s  (top-%s neighbours)", out_dir / "item_similarity.npz", meta["neighbours_per_movie"])
+    log.info("  %s  (top-%s content neighbours)", out_dir / "content_similarity.npz", meta["content_neighbours_per_movie"])
     log.info("  %s", out_dir / "model_meta.json")
     return 0
 
