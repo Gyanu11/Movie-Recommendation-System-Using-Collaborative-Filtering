@@ -15,7 +15,7 @@
       <div class="absolute inset-0 bg-gradient-to-t from-black via-black/25 to-transparent opacity-85"></div>
 
       {% if movie.similarity_score is defined %}
-      <span class="absolute right-3 top-3 rounded-full bg-amber-400 px-2.5 py-1 text-xs font-bold text-zinc-950 shadow-lg"
+      <span class="absolute right-3 top-3 rounded-full bg-amber-200 px-2.5 py-1 text-xs font-bold text-zinc-950 shadow-lg"
             title="Cosine similarity between this movie and your selection">{{ '%.0f'|format(movie.similarity_score) }}% match</span>
       {% endif %}
 
@@ -44,3 +44,4 @@
     </div>
   </div>
 </article>
+

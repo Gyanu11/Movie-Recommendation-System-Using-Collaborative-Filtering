@@ -3,7 +3,7 @@ Route modules, split by area and wired up as Flask blueprints.
 
 Blueprints namespace their endpoints, so templates refer to
 `url_for('main.home')`, `url_for('auth.login')` and `url_for('admin.movies')`.
-That makes it obvious at a glance which part of the app a link points at, and
+That makes it obvious at a glance which part of the app a link points at and
 lets the admin area carry a single `/admin` URL prefix instead of repeating it
 on every route.
 """

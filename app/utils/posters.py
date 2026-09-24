@@ -1,12 +1,7 @@
 """
-Poster artwork.
-
-MovieLens ships ids and ratings, not images. Roughly 13% of the catalog has a
-real poster URL carried over in `movies.csv`.
-
-Everything else gets a generated placeholder: a deterministic gradient card
-built from the movie's own id, with its title and year set in the site's
-typeface.
+Poster artwork .
+Handles movie poster artwork using real poster URLs when available and
+generated placeholders for movies without images.
 """
 from __future__ import annotations
 

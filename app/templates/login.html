@@ -10,7 +10,7 @@
     {{ form.hidden_tag() }}
     <div>
       {{ form.email.label(class="text-sm font-medium text-zinc-300") }}
-      {{ form.email(class=field, placeholder="you@gmail.com", autocomplete="email") }}
+      {{ form.email(class=field, placeholder="your@gmail.com", autocomplete="email") }}
       {% for error in form.email.errors %}<p class="mt-1 text-xs text-rose-300">{{ error }}</p>{% endfor %}
     </div>
     <div>

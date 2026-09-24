@@ -38,9 +38,7 @@ def _reject_without_csrf(redirect_endpoint: str):
     return redirect(url_for(redirect_endpoint))
 
 
-# --------------------------------------------------------------------------- #
 # Dashboard
-# --------------------------------------------------------------------------- #
 @admin_bp.route("/")
 @admin_required
 def dashboard():
@@ -70,9 +68,7 @@ def dashboard():
     )
 
 
-# --------------------------------------------------------------------------- #
 # Movies
-# --------------------------------------------------------------------------- #
 @admin_bp.route("/movies")
 @admin_required
 def movies():
@@ -199,9 +195,7 @@ def movie_delete(movie_id):
     return redirect(url_for("admin.movies"))
 
 
-# --------------------------------------------------------------------------- #
 # Users
-# --------------------------------------------------------------------------- #
 @admin_bp.route("/users")
 @admin_required
 def users():
@@ -285,9 +279,7 @@ def _admin_count() -> int:
     return db.session.scalar(select(func.count()).select_from(User).where(User.is_admin)) or 0
 
 
-# --------------------------------------------------------------------------- #
 # Watchlists
-# --------------------------------------------------------------------------- #
 @admin_bp.route("/watchlist", methods=["GET", "POST"])
 @admin_required
 def watchlist():

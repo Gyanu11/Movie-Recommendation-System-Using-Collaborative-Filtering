@@ -1,14 +1,9 @@
 """
-Database models.
-
-Only *user* data lives in SQLite. The movie catalog and the trained
-similarity model are read-only artifacts loaded from `data/processed/`, so
-they are deliberately not modelled as tables.
-
-`UserRating` is what makes the recommendations personal: the collaborative
-filter is trained on 20 million MovieLens ratings, and a user's own stars are
-the profile that gets matched against it.
+Database models for user data and personalized movie ratings where UserRating
+is for storing user-specific movie ratings, collaborative filtering trained on
+20 million MovieLens ratings.
 """
+
 from __future__ import annotations
 
 from datetime import datetime, timezone

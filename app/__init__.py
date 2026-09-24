@@ -1,14 +1,8 @@
 """
-Application factory.
-
-    from app import create_app
-    app = create_app()
-
-Building the app inside a function (rather than as a module-level global)
-keeps imports acyclic, lets the test suite spin up an isolated instance with
-`create_app("testing")`, and makes the start-up order explicit: config,
-extensions, data, routes, error handlers, then first-run bootstrap.
+Creates and configures the Flask application in a controlled startup order,
+supporting clean imports, isolated testing and flexible configurations.
 """
+
 from __future__ import annotations
 
 import logging
@@ -103,11 +97,7 @@ def _register_template_globals(app: Flask) -> None:
     from app.utils.youtube import trailer_search_url
 
     def poster(movie) -> str:
-        """Resolve a movie's artwork, falling back to a generated placeholder.
-
-        Templates call this instead of reading `movie.poster_url` directly, so
-        the "no image available" case is handled in exactly one place.
-        """
+        """Return a movie's poster URL or a generated placeholder if unavailable."""
         if movie is None:
             return url_for("static", filename="default_movie.jpg")
         url = (movie.get("poster_url") if isinstance(movie, dict) else getattr(movie, "poster_url", "")) or ""
