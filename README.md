@@ -172,6 +172,7 @@ movie-recommendation-system/
 │   ├── forms.py                Flask-WTF forms and shared validators
 │   ├── decorators.py           @admin_required
 │   ├── services/
+|   |   ├── __init__.py         Service layer that creates & stores the movie catalog and recommendation
 │   │   ├── catalog.py          in-memory catalog, indexes, search, admin writes
 │   │   └── recommender.py      SimilarityIndex + RecommendationEngine
 │   ├── utils/
@@ -180,10 +181,11 @@ movie-recommendation-system/
 │   │   ├── media.py            profile picture uploads
 │   │   └── youtube.py          trailer lookup, degrades gracefully offline
 │   ├── views/
+|   |   ├── __init__.py         Route modules, split by area and wired up as Flask blueprints.
 │   │   ├── main.py             browsing, search, recommender, ratings, watchlist
 │   │   ├── auth.py             register, login, logout, account
 │   │   └── admin.py            dashboard and CRUD
-│   ├── static/
+│   ├── static/                 CSS (Tailwind)
 │   └── templates/              Jinja2 HTML Templates
 ├── data/
 │   ├── raw/                    ← put the MovieLens CSVs here (not shipped)
@@ -207,16 +209,13 @@ movie-recommendation-system/
 - **Python 3.11 or newer** — check with `python --version`
 - **VS Code** with the **Python** extension (`ms-python.python`)
 
-### 1. Open the project
+### 1. Clone the Repository
+```bash
+git clone https://github.com/Gyanu11/Movie-Recommendation-System-Using-Collaborative-Filtering.git 
+cd Movie-Recommendation-System
+```
 
-Unzip the archive, then in VS Code: **File → Open Folder…** and pick the
-`movie-recommendation-system` folder (the one containing `run.py`).
-
-VS Code will offer the recommended extensions from `.vscode/extensions.json` —
-accepting them gives you Jinja template highlighting and Tailwind class
-completion.
-
-### 2. Create a virtual environment
+### 2. SetUp a virtual environment(Recommended)
 
 Open the integrated terminal with **Ctrl + `** (backtick), then:
 
