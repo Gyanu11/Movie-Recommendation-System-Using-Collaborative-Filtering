@@ -41,8 +41,8 @@ def _configure_logging(app: Flask) -> None:
         format="%(asctime)s  %(levelname)-7s %(name)s  %(message)s",
         datefmt="%H:%M:%S",
     )
-    # Werkzeug logs every static asset at INFO; that drowns out our own output.
-    logging.getLogger("werkzeug").setLevel(logging.WARNING)
+    # Keep Flask's request lines visible while developing and debugging routes.
+    logging.getLogger("werkzeug").setLevel(logging.INFO)
 
 
 def _ensure_instance_folder(app: Flask) -> None:
