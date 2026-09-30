@@ -188,7 +188,7 @@ def movie_delete(movie_id):
         for model in (UserWatchlist, UserRating):
             db.session.execute(delete(model).where(model.movie_id == key))
         db.session.commit()
-        flash("Movie deleted from the catalog.", "success")
+        flash("Movie deleted from the catalog.", "danger")
     else:
         flash("Movie not found.", "warning")
 
@@ -271,7 +271,7 @@ def user_delete(user_id):
     # Watchlist and rating rows cascade via the relationship definitions.
     db.session.delete(user)
     db.session.commit()
-    flash("User deleted.", "success")
+    flash("User deleted.", "danger")
     return redirect(url_for("admin.users"))
 
 
@@ -342,5 +342,5 @@ def watchlist_delete(entry_id):
     entry = db.get_or_404(UserWatchlist, entry_id)
     db.session.delete(entry)
     db.session.commit()
-    flash("Watchlist entry deleted.", "success")
+    flash("Watchlist entry deleted.", "danger")
     return redirect(url_for("admin.watchlist"))

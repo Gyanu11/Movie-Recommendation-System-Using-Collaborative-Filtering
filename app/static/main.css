@@ -532,15 +532,19 @@ legend {
 .btn-primary:hover {
   background-color: #0056b3;
 }
+.btn-sm {
+  padding: 0.25rem 0.5rem;
+  font-size: 0.875rem;
+}
 
 .btn-secondary {
-  background-color: #6c757d;
+  background-color: #128df9;
   border: none;
   color: #fff;
 }
 
 .btn-secondary:hover {
-  background-color: #545b62;
+  background-color: #184979;
 }
 
 a {
@@ -604,12 +608,6 @@ a:hover {
   outline: none;
 }
 form.form-inline {
-    display: flex;
-    align-items: center;
-    margin-left: auto; /* keep it on the right side of navbar */
-}
-
-form.form-inline input.form-control {
     width: 220px; /* fixed width so button doesn't wrap */
     margin-right: 8px; /* space between input and button */
     flex: 0 0 auto;
