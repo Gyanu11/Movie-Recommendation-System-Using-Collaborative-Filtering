@@ -5,12 +5,12 @@
   <h1 class="text-2xl font-bold text-brand-600 sm:text-3xl">Watchlists</h1>
   <p class="mt-1 text-sm text-slate-500">{{ entries | length }} saved item{{ '' if entries | length == 1 else 's' }} across all accounts</p>
 
-  <form method="POST" class="{{ card }} mt-6 grid gap-4 p-5 sm:grid-cols-[1fr_1fr_auto] sm:items-end">
+  <form method="POST" class="{{ card }} mt-6 grid gap-10 p-5 sm:grid-cols-[1fr_1fr_auto] sm:items-end">
     {{ form.hidden_tag() }}
     <div>
       {{ form.user_id.label(class=label_cls) }}
       {{ form.user_id(class=field) }}
-      {% for error in form.user_id.errors %}<p class="mt-1 text-xs text-rose-600">{{ error }}</p>{% endfor %}
+      {% for error in form.user_id.errors %}<p class=" mt-1 text-xs text-rose-600">{{ error }}</p>{% endfor %}
     </div>
     <div>
       {{ form.movie_id.label(class=label_cls) }}
@@ -21,7 +21,10 @@
   </form>
 
   <div class="mt-6">
-    <input class="{{ field }} !mt-0 sm:max-w-md" type="search" placeholder="Filter by user, email or movie" data-filter-input="#watchTable" aria-label="Filter watchlist entries" />
+  <div class="relative sm:w-96">
+        <input class="{{ field }} !mt-0 w-full rounded-lg border border-slate-300 bg-white px-4 py-2.5 pr-10 text-sm shadow-sm outline-none transition focus:border-brand-500 focus:ring-2 focus:ring-brand-500/20"
+            type="search"    placeholder="Filter by user, email or movie"      data-filter-input="#watchTable"     aria-label="Filter watchlist entries"/>
+    </div>
   </div>
 
   <div id="watchTable" class="{{ card }} thin-scroll mt-4 overflow-x-auto">
@@ -32,7 +35,7 @@
           <th class="px-4 py-3">Movie ID</th>
           <th class="px-4 py-3">Title</th>
           <th class="px-4 py-3">Added</th>
-          <th class="px-4 py-3"></th>
+          <th class="px-4 py-3 text-right">Actions</th>
         </tr>
       </thead>
       <tbody class="divide-y divide-slate-100 text-slate-700">
@@ -55,7 +58,7 @@
             <form class="flex justify-end" method="POST" action="{{ url_for('admin.watchlist_delete', entry_id=entry.id) }}"
                   onsubmit="return confirm('Remove this watchlist entry?');">
               {{ csrf_form.hidden_tag() }}
-              <button class="{{ btn_danger }}" type="submit">Delete</button>
+              <button class="{{ btn_danger}} rounded-lg bg-rose-50 px-3 py-1.5 text-xs font-semibold text-rose-600 transition hover:bg-rose-100" type="submit">Delete</button>
             </form>
           </td>
         </tr>
