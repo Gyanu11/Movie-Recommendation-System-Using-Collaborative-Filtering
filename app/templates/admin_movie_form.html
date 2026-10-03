@@ -1,35 +1,75 @@
 {% extends "admin_layout.html" %}
 {% block content %}
-{% include "_admin_ui.html" %}
-<div class="{{ card }} admin-fade mx-auto max-w-2xl p-6 sm:p-8">
-  <h1 class="text-2xl font-bold text-brand-600 sm:text-3xl">{% if mode == 'create' %}Add movie{% else %}Edit movie{% endif %}</h1>
-
-  {% if mode == 'create' %}
-  <p class="mt-3 rounded-xl border border-sky-200 bg-sky-50 p-3 text-xs text-sky-800">
-    Movies added here appear in the catalog and in search, but they have no MovieLens rating history,
-    so the collaborative filter cannot recommend from them until the model is rebuilt.
+{% macro field_block(item, hint=None, rows=None) %}
+<div>
+  {{ item.label(class="mb-1.5 block text-sm font-semibold text-slate-700") }}
+  {{ item(class="block w-full rounded-xl border border-slate-200 bg-slate-50/60 px-4 py-3 text-sm text-slate-800 placeholder:text-slate-400 transition hover:border-slate-300 focus:border-brand-500 focus:bg-white focus:outline-none focus:ring-4 focus:ring-brand-500/15" ~ (" border-rose-300 bg-rose-50/40" if item.errors else ""), rows=rows) }}
+  {% if hint %}<p class="mt-1.5 text-xs text-slate-500">{{ hint|safe }}</p>{% endif %}
+  {% for error in item.errors %}
+  <p class="mt-1.5 flex items-center gap-1.5 text-xs font-medium text-rose-600">
+    <svg class="h-3.5 w-3.5 shrink-0" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-8-4a1 1 0 00-1 1v3a1 1 0 002 0V7a1 1 0 00-1-1zm0 7a1 1 0 100 2 1 1 0 000-2z" clip-rule="evenodd"/></svg>
+    {{ error }}
   </p>
-  {% elif movie %}
-  <p class="mt-2 text-sm text-slate-500">
-    {{ '{:,}'.format(movie.rating_count) }} MovieLens ratings, averaging {{ '%.2f'|format(movie.rating_avg) }}.
-    Those figures come from the dataset and are not editable.
-  </p>
-  {% endif %}
+  {% endfor %}
+</div>
+{% endmacro %}
 
-  <form method="POST" class="mt-6 space-y-4">
-    {{ form.hidden_tag() }}
-    {% for item in [form.movie_id, form.title, form.year, form.genres, form.keywords, form.imdb_id, form.poster_url] %}
-    <div>
-      {{ item.label(class=label_cls) }}
-      {{ item(class=field, rows=3 if item.name == 'keywords' else None) }}
-      {% for error in item.errors %}<p class="mt-1 text-xs text-rose-600">{{ error }}</p>{% endfor %}
+<div class="admin-fade mx-auto max-w-2xl overflow-hidden rounded-3xl border border-slate-100 bg-white shadow-card">
+  <!-- Header -->
+  <div class="relative bg-gradient-to-br from-brand-500 via-brand-600 to-brand-700 px-6 py-7 text-white sm:px-8">
+    <div class="pointer-events-none absolute -right-8 -top-10 h-36 w-36 rounded-full bg-white/10"></div>
+    <div class="pointer-events-none absolute -bottom-12 right-16 h-24 w-24 rounded-full bg-white/10"></div>
+    <div class="relative flex items-center gap-4">
+      <span class="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-white/20 ring-1 ring-white/30">
+        <svg class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="3" width="20" height="18" rx="2"/><path d="M7 3v18M17 3v18M2 8h5M2 12h5M2 16h5M17 8h5M17 12h5M17 16h5"/></svg>
+      </span>
+      <div>
+        <h1 class="text-2xl font-bold tracking-tight sm:text-3xl">{% if mode == 'create' %}Add movie{% else %}Edit movie{% endif %}</h1>
+        <p class="mt-0.5 text-sm text-white/80">{% if mode == 'create' %}Add a new title to the catalog{% else %}Update this title's catalog details{% endif %}</p>
+      </div>
     </div>
-    {% endfor %}
-    <p class="text-xs text-slate-500">Genres and keywords are pipe-separated, e.g. <code class="rounded bg-slate-100 px-1">Action|Thriller</code>. Leave the poster URL empty to use generated artwork.</p>
-    <div class="flex flex-wrap gap-3 pt-2">
-      {{ form.submit(class=btn_primary) }}
-      <a class="{{ btn_secondary }}" href="{{ url_for('admin.movies') }}">Cancel</a>
+  </div>
+
+  <div class="p-6 sm:p-8">
+    {% if mode == 'create' %}
+    <div class="flex gap-3 rounded-2xl border border-sky-200 bg-sky-50 p-4 text-xs leading-relaxed text-sky-800">
+      <svg class="mt-0.5 h-4 w-4 shrink-0 text-sky-500" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clip-rule="evenodd"/></svg>
+      <p>
+        Movies added here appear in the catalog and in search, but they have no MovieLens rating history,
+        so the collaborative filter cannot recommend from them until the model is rebuilt.
+      </p>
     </div>
-  </form>
+    {% elif movie %}
+    <div class="flex gap-3 rounded-2xl border border-slate-200 bg-slate-50 p-4 text-sm text-slate-600">
+      <svg class="mt-0.5 h-4 w-4 shrink-0 text-brand-500" fill="currentColor" viewBox="0 0 20 20"><path d="M9.05 2.93c.3-.92 1.6-.92 1.9 0l1.07 3.29a1 1 0 00.95.69h3.46c.97 0 1.37 1.24.59 1.81l-2.8 2.03a1 1 0 00-.36 1.12l1.07 3.29c.3.92-.76 1.69-1.54 1.12l-2.8-2.03a1 1 0 00-1.18 0l-2.8 2.03c-.78.57-1.84-.2-1.54-1.12l1.07-3.29a1 1 0 00-.36-1.12L2.98 8.72c-.78-.57-.38-1.81.59-1.81h3.46a1 1 0 00.95-.69l1.07-3.29z"/></svg>
+      <p>
+        <span class="font-semibold text-slate-800">{{ '{:,}'.format(movie.rating_count) }}</span> MovieLens ratings, averaging
+        <span class="font-semibold text-slate-800">{{ '%.2f'|format(movie.rating_avg) }}</span>.
+        Those figures come from the dataset and are not editable.
+      </p>
+    </div>
+    {% endif %}
+
+    <form method="POST" class="mt-6 space-y-5">
+      {{ form.hidden_tag() }}
+
+      <div class="grid gap-5 sm:grid-cols-2">
+        {{ field_block(form.movie_id) }}
+        {{ field_block(form.year) }}
+      </div>
+      {{ field_block(form.title) }}
+      {{ field_block(form.genres, hint='Pipe-separated, e.g. <code class="rounded bg-slate-100 px-1.5 py-0.5 font-mono text-slate-700">Action|Thriller</code>') }}
+      {{ field_block(form.keywords, rows=3) }}
+      <div class="grid gap-5 sm:grid-cols-2">
+        {{ field_block(form.imdb_id) }}
+        {{ field_block(form.poster_url, hint="Leave empty to use generated artwork.") }}
+      </div>
+
+      <div class="flex flex-wrap items-center gap-3 border-t border-slate-100 pt-6">
+        {{ form.submit(class="inline-flex cursor-pointer items-center justify-center rounded-xl bg-brand-500 px-6 py-3 text-sm font-semibold text-white shadow-lg shadow-brand-500/30 transition hover:-translate-y-0.5 hover:bg-brand-600 focus:outline-none focus:ring-4 focus:ring-brand-500/30") }}
+        <a class="inline-flex items-center justify-center rounded-xl border border-slate-200 bg-white px-6 py-3 text-sm font-semibold text-slate-700 transition hover:bg-slate-50 hover:text-slate-900 focus:outline-none focus:ring-4 focus:ring-slate-200" href="{{ url_for('admin.movies') }}">Cancel</a>
+      </div>
+    </form>
+  </div>
 </div>
 {% endblock content %}
