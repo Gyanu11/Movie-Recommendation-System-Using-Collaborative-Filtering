@@ -1,29 +1,59 @@
 {% extends "admin_layout.html" %}
 {% block content %}
-{% include "_admin_ui.html" %}
-<div class="{{ card }} admin-fade mx-auto max-w-xl p-6 sm:p-8">
-  <h1 class="text-2xl font-bold text-brand-600 sm:text-3xl">{% if mode == 'create' %}Add user{% else %}Edit user{% endif %}</h1><br>
-  {% if mode == 'edit' and user %}<p class="mt-1 text-sm text-slate-500">Account #{{ user.id }}</p>{% endif %}
+{% macro field_block(item, hint=None) %}
+<div>
+  {{ item.label(class="mb-1.5 block text-sm font-semibold text-slate-700") }}
+  {{ item(class="block w-full rounded-xl border border-slate-200 bg-slate-50/60 px-4 py-3 text-sm text-slate-800 placeholder:text-slate-400 transition hover:border-slate-300 focus:border-brand-500 focus:bg-white focus:outline-none focus:ring-4 focus:ring-brand-500/15" ~ (" border-rose-300 bg-rose-50/40" if item.errors else "")) }}
+  {% if hint %}<p class="mt-1.5 text-xs text-slate-500">{{ hint }}</p>{% endif %}
+  {% for error in item.errors %}
+  <p class="mt-1.5 flex items-center gap-1.5 text-xs font-medium text-rose-600">
+    <svg class="h-3.5 w-3.5 shrink-0" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-8-4a1 1 0 00-1 1v3a1 1 0 002 0V7a1 1 0 00-1-1zm0 7a1 1 0 100 2 1 1 0 000-2z" clip-rule="evenodd"/></svg>
+    {{ error }}
+  </p>
+  {% endfor %}
+</div>
+{% endmacro %}
 
-  <form method="POST" class="mt-6 space-y-4">
-    {{ form.hidden_tag() }}
-    {% for item in [form.username, form.email, form.password] %}
-    <div>
-      {{ item.label(class=label_cls) }}
-      {{ item(class=field) }}
-      {% for error in item.errors %}<p class="mt-1 text-xs text-rose-600">{{ error }}</p>{% endfor %}
+<div class="admin-fade mx-auto max-w-xl overflow-hidden rounded-3xl border border-slate-100 bg-white shadow-card">
+  <!-- Header -->
+  <div class="relative bg-gradient-to-br from-brand-500 via-brand-600 to-brand-700 px-6 py-7 text-white sm:px-8">
+    <div class="pointer-events-none absolute -right-8 -top-10 h-36 w-36 rounded-full bg-white/10"></div>
+    <div class="pointer-events-none absolute -bottom-12 right-16 h-24 w-24 rounded-full bg-white/10"></div>
+    <div class="relative flex items-center gap-4">
+      <span class="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-white/20 ring-1 ring-white/30">
+        <svg class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+          {% if mode == 'create' %}<path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M19 8v6M22 11h-6"/>
+          {% else %}<path d="M17 21v-2a4 4 0 0 0-4-4H7a4 4 0 0 0-4 4v2"/><circle cx="10" cy="7" r="4"/><path d="M21 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75"/>{% endif %}
+        </svg>
+      </span>
+      <div>
+        <h1 class="text-2xl font-bold tracking-tight sm:text-3xl">{% if mode == 'create' %}Add user{% else %}Edit user{% endif %}</h1>
+        <p class="mt-0.5 text-sm text-white/80">
+          {% if mode == 'edit' and user %}Account #{{ user.id }}{% else %}Create a new account for the site{% endif %}
+        </p>
+      </div>
     </div>
-    {% endfor %}
-    {% if mode == 'edit' %}<p class="text-xs text-slate-500">Leave the password blank to keep the current one.</p>{% endif %}
+  </div>
 
-    <label class="flex items-center gap-3 text-sm text-slate-700">
-      {{ form.is_admin(class="h-4 w-4 rounded border-slate-300 text-brand-500 focus:ring-brand-500") }}
-      <span>Administrator</span>
+  <!-- Form -->
+  <form method="POST" class="space-y-5 p-6 sm:p-8">
+    {{ form.hidden_tag() }}
+
+    {{ field_block(form.username) }}
+    {{ field_block(form.email) }}
+    {{ field_block(form.password, hint="Leave the password blank to keep the current one." if mode == 'edit' else None) }}
+
+    <label class="flex cursor-pointer items-start gap-3 rounded-2xl border border-slate-200 bg-slate-50/60 p-4 transition hover:border-brand-200 hover:bg-brand-50/50">
+      {{ form.is_admin(class="mt-0.5 h-5 w-5 rounded-md border-slate-300 text-brand-500 focus:ring-2 focus:ring-brand-500/40") }}
+      <span>
+        <span class="block text-sm font-semibold text-slate-800">Administrator</span>
+        <span class="block text-xs text-slate-500">Grants full access to the admin panel.</span>
+      </span>
     </label>
 
-    <div class="flex flex-wrap gap-3 pt-2">
-      {{ form.submit(class=btn_primary) }}
-      <a class="{{ btn_secondary }}" href="{{ url_for('admin.users') }}">Cancel</a>
+    <div class="flex flex-wrap items-center gap-3 border-t border-slate-100 pt-6">
+      {{ form.submit(class="inline-flex cursor-pointer items-center justify-center rounded-xl bg-brand-500 px-6 py-3 text-sm font-semibold text-white shadow-lg shadow-brand-500/30 transition hover:-translate-y-0.5 hover:bg-brand-600 focus:outline-none focus:ring-4 focus:ring-brand-500/30") }}
+      <a class="inline-flex items-center justify-center rounded-xl border border-slate-200 bg-white px-6 py-3 text-sm font-semibold text-slate-700 transition hover:bg-slate-50 hover:text-slate-900 focus:outline-none focus:ring-4 focus:ring-slate-200" href="{{ url_for('admin.users') }}">Cancel</a>
     </div>
   </form>
 </div>
