@@ -61,6 +61,7 @@
         <a class="text-sm font-medium text-zinc-300 transition hover:text-amber-300" href="{{ url_for('main.home') }}">Home</a>
         {% if current_user.is_authenticated %}
         <a class="text-sm font-medium text-zinc-300 transition hover:text-amber-300" href="{{ url_for('main.for_you') }}">For you</a>
+        <a class="text-sm font-medium text-zinc-300 transition hover:text-amber-300" href="{{ url_for('main.content_recommendations') }}">Based on your genres</a>
         <a class="text-sm font-medium text-zinc-300 transition hover:text-amber-300" href="{{ url_for('main.recommender') }}">Recommender</a>
         <a class="text-sm font-medium text-zinc-300 transition hover:text-amber-300" href="{{ url_for('main.surprise') }}">Surprise me</a>
         {% if current_user.is_admin %}
@@ -111,6 +112,7 @@
         <a href="{{ url_for('main.home') }}">Home</a>
         {% if current_user.is_authenticated %}
         <a href="{{ url_for('main.for_you') }}">For you</a>
+        <a href="{{ url_for('main.content_recommendations') }}">Based on your genres</a>
         <a href="{{ url_for('main.recommender') }}">Recommender</a>
         <a href="{{ url_for('main.surprise') }}">Surprise me</a>
         {% if current_user.is_admin %}<a class="text-amber-300" href="{{ url_for('admin.dashboard') }}">Admin</a>{% endif %}
@@ -144,7 +146,7 @@
   </main>
 
   <footer class="border-t border-white/10 py-8 text-center text-xs text-zinc-500">
-    <p>Movie Hub — Item-based collaborative filtering on MovieLens with 20M</p>
+    <p>Movie Hub — Hybrid collaborative and content-based recommendations</p>
     <p class="mt-2">
       <a class="hover:text-amber-300" href="{{ url_for('main.about') }}">About this project</a>
     </p>

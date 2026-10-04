@@ -249,6 +249,63 @@ class RecommendationEngine:
                 break
         return results
 
+    def content_for_user(
+        self,
+        ratings: Mapping[str, float],
+        watchlist: Sequence[str] = (),
+        limit: int = 12,
+    ) -> list[Recommendation]:
+        """Recommend movies from the genres and keywords in a user's profile."""
+        if not self.content_index or not self.content_index.is_ready:
+            return []
+
+        profile = self._build_profile(ratings, watchlist)
+        if not profile:
+            return []
+
+        seen = set(profile)
+        totals: dict[str, float] = defaultdict(float)
+        best_source: dict[str, tuple[float, str]] = {}
+
+        for source_id, weight in profile.items():
+            if weight <= 0:
+                continue
+            source_title = ""
+            for neighbour_id, similarity in self.content_index.neighbours(source_id, limit=50):
+                if neighbour_id in seen:
+                    continue
+                contribution = similarity * weight
+                totals[neighbour_id] += contribution
+                if contribution > best_source.get(neighbour_id, (0.0, ""))[0]:
+                    if not source_title:
+                        source = self.catalog.get(source_id)
+                        source_title = source.title if source else ""
+                    best_source[neighbour_id] = (contribution, source_title)
+
+        divisor = sum(weight for weight in profile.values() if weight > 0) or 1.0
+        scored = [
+            (movie_id, total / divisor)
+            for movie_id, total in totals.items()
+            if total > 0
+        ]
+        scored.sort(key=lambda item: item[1], reverse=True)
+
+        results: list[Recommendation] = []
+        for movie_id, score in scored:
+            movie = self.catalog.get(movie_id)
+            if movie is None:
+                continue
+            results.append(
+                Recommendation(
+                    movie=movie,
+                    score=score,
+                    because_of=best_source.get(movie_id, (0.0, ""))[1],
+                )
+            )
+            if len(results) == limit:
+                break
+        return results
+
     def _build_profile(self, ratings: Mapping[str, float], watchlist: Sequence[str]) -> dict[str, float]:
         """Merge explicit ratings and implicit watchlist saves into weights."""
         profile: dict[str, float] = {}

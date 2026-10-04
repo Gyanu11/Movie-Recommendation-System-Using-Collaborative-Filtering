@@ -195,6 +195,27 @@ def for_you():
     )
 
 
+@main_bp.route("/content-recommendations")
+@login_required
+def content_recommendations():
+    """Show recommendations based only on the user's movie content preferences."""
+    ratings = _user_ratings(current_user.id)
+    watchlist = _user_watchlist_ids(current_user.id)
+    results = to_dicts(
+        get_engine().content_for_user(
+            ratings,
+            watchlist,
+            limit=current_app.config["PERSONAL_RESULT_LIMIT"],
+        )
+    )
+    return render_template(
+        "content_recommendations.html",
+        title="Based on your genres",
+        results=results,
+        profile_count=len(ratings) + len(watchlist),
+    )
+
+
 @main_bp.route("/api/suggest")
 def suggest():
     """Autocomplete feed for the recommender input."""
