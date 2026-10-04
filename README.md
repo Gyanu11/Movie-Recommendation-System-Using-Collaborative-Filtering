@@ -1,14 +1,12 @@
-# Movie Hub — A Collaborative Filtering Movie Recommendation System
+# Movie Hub — A Hybrid Movie Recommendation System
 
 A Flask web application that recommends films using **item-based collaborative
-filtering with cosine similarity**, trained on the **MovieLens 20M** dataset
-(20,000,263 ratings from 138,493 users).
+filtering** and a separate **TF-IDF content-based model**, trained from the
+**MovieLens 20M** dataset (20,000,263 ratings from 138,493 users).
 
-Unlike a content-based recommender, which compares plot summaries or genres,
-this system learns from behaviour: two movies are similar when the same people
-tended to rate them the same way. The result is that *The Dark Knight* leads to
-*Batman Begins*, *Inception* and *The Prestige*  a connection no genre tag
-would ever produce.
+The **For you** page uses viewer rating patterns, while **Based on your genres**
+uses the genres and MovieLens genome keywords from movies you rated positively
+or added to your watchlist.
 
 
 ## Tech stack
@@ -28,6 +26,7 @@ would ever produce.
 | **Similar movies** | Every movie page lists the films whose audiences overlap most with it |
 | **Recommender** | Type a film you like, get ranked recommendations with a match percentage |
 | **Personal recommendations** | `/for-you` ranks the whole catalog against your own ratings and watchlist |
+| **Genre recommendations** | `/content-recommendations` ranks movies using only genres and keywords from your positive profile |
 | **Star ratings** | Rate any film 1–5; your profile immediately changes what you are recommended |
 | **Typo-tolerant search** | `godfater` finds *The Godfather*, `matrx` finds *The Matrix* |
 | **Watchlist** | Save films to a personal list |
@@ -96,10 +95,11 @@ identical results for the top-N recommendations actually served.
 **Content-based model.** The builder also combines each movie's genres and
 MovieLens genome keywords into a TF-IDF vector. Cosine similarity between
 those vectors produces a second top-50 neighbour list in
-`content_similarity.npz`. At serving time, recommendations use 70% rating
-similarity and 30% content similarity. If the content artifact has not been
-generated yet, the application continues using the original collaborative
-filter by itself.
+`content_similarity.npz`. At serving time, the typed-title recommender and
+the existing personal recommendations use 70% rating similarity and 30%
+content similarity. The separate `/content-recommendations` page uses only
+the content neighbour list, weighted by the user's positive ratings and
+watchlist signals.
 
 ### Serving — `app/services/recommender.py`
 
@@ -122,6 +122,11 @@ has already rated or saved is removed before ranking.
 The divisor is constant for a given user, so it cannot change the ordering — it
 just keeps the score inside 0–1 and comparable between users with different
 numbers of ratings.
+
+**Content-based personalisation** — the genre recommendations page uses the
+same profile signals but retrieves neighbours only from the TF-IDF content
+index. Movies rated below the 3.0 midpoint are not treated as positive content
+preferences, so this page represents the genres and keywords the user liked.
 
 ### The cold-start problem
 
