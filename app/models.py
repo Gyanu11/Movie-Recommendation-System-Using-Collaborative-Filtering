@@ -38,6 +38,8 @@ class User(db.Model, UserMixin):
     image_file = db.Column(db.String(40), nullable=False, default="default.jpg")
     password = db.Column(db.String(60), nullable=False)
     is_admin = db.Column(db.Boolean, nullable=False, default=False)
+    # Soft-delete flag: Flask-Login treats an inactive user as not authenticated.
+    is_active = db.Column(db.Boolean, nullable=False, default=True, server_default=db.true())
 
     watchlist_entries = db.relationship(
         "UserWatchlist", back_populates="user", lazy="selectin", cascade="all, delete-orphan"

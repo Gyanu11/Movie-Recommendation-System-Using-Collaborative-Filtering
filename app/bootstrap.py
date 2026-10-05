@@ -8,7 +8,7 @@ from __future__ import annotations
 import logging
 
 from flask import Flask
-from sqlalchemy import select
+from sqlalchemy import inspect, select, text
 
 from app.extensions import bcrypt, db
 from app.models import User, UserRating, UserWatchlist
@@ -19,12 +19,23 @@ log = logging.getLogger(__name__)
 def init_app_data(app: Flask) -> None:
     with app.app_context():
         db.create_all()
+        _ensure_user_is_active_column()
         _ensure_admin_account(
             app.config["ADMIN_USERNAME"],
             app.config["ADMIN_EMAIL"],
             app.config["ADMIN_PASSWORD"],
         )
         _prune_orphaned_rows(app)
+
+
+def _ensure_user_is_active_column() -> None:
+    """create_all() never alters existing tables, so add `is_active` to older databases."""
+    columns = {col["name"] for col in inspect(db.engine).get_columns("user")}
+    if "is_active" in columns:
+        return
+    db.session.execute(text('ALTER TABLE "user" ADD COLUMN is_active BOOLEAN NOT NULL DEFAULT 1'))
+    db.session.commit()
+    log.info("Added is_active column to the user table")
 
 
 def _ensure_admin_account(username: str, email: str, password: str) -> None:
@@ -34,8 +45,9 @@ def _ensure_admin_account(username: str, email: str, password: str) -> None:
     )
 
     if existing is not None:
-        if not existing.is_admin:
+        if not existing.is_admin or not existing.is_active:
             existing.is_admin = True
+            existing.is_active = True
             db.session.commit()
             log.info("Promoted existing account %r to administrator", existing.username)
         return

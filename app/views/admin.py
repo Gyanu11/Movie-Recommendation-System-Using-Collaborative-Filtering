@@ -20,13 +20,13 @@ admin_bp = Blueprint("admin", __name__, url_prefix="/admin")
 
 def _movie_from_form(form: AdminMovieForm) -> Movie:
     return Movie(
-        movie_id=form.movie_id.data,
-        title=form.title.data,
+        movie_id= str(form.movie_id.data),
+        title= str(form.title.data),
         year=str(form.year.data or ""),
-        genres=form.genres.data,
-        keywords=form.keywords.data or "",
-        imdb_id=form.imdb_id.data or "",
-        poster_url=form.poster_url.data or "",
+        genres=str(form.genres.data),
+        keywords=str(form.keywords.data or ""),
+        imdb_id=str(form.imdb_id.data or ""),
+        poster_url=str(form.poster_url.data or ""),
     )
 
 
@@ -210,8 +210,8 @@ def user_create():
     if form.validate_on_submit():
         db.session.add(
             User(
-                username=form.username.data,
-                email=form.email.data,
+                username=str(form.username.data),
+                email=str(form.email.data),
                 password=bcrypt.generate_password_hash(form.password.data).decode("utf-8"),
                 is_admin=bool(form.is_admin.data),
             )
@@ -253,30 +253,43 @@ def user_edit(user_id):
     return render_template("admin_user_form.html", title="Edit User", form=form, mode="edit", user=user)
 
 
-@admin_bp.route("/users/<int:user_id>/delete", methods=["POST"])
+@admin_bp.route("/users/<int:user_id>/toggle-active", methods=["POST"])
 @admin_required
-def user_delete(user_id):
+def user_toggle_active(user_id):
+    """Soft-delete: deactivate (or reactivate) an account without removing its data."""
     rejected = _reject_without_csrf("admin.users")
     if rejected:
         return rejected
 
     user = db.get_or_404(User, user_id)
-    if user.id == current_user.id:
-        flash("You cannot delete the account you are logged in with.", "warning")
-        return redirect(url_for("admin.users"))
-    if user.is_admin and _admin_count() <= 1:
-        flash("You cannot delete the last administrator.", "warning")
-        return redirect(url_for("admin.users"))
+    if user.is_active:
+        if user.id == current_user.id:
+            flash("You cannot deactivate the account you are logged in with.", "warning")
+            return redirect(url_for("admin.users"))
+        if user.is_admin and _active_admin_count() <= 1:
+            flash("You cannot deactivate the last active administrator.", "warning")
+            return redirect(url_for("admin.users"))
+        user.is_active = False
+        flash(f"{user.username} has been deactivated.", "warning")
+    else:
+        user.is_active = True
+        flash(f"{user.username} has been activated.", "success")
 
-    # Watchlist and rating rows cascade via the relationship definitions.
-    db.session.delete(user)
     db.session.commit()
-    flash("User deleted.", "danger")
     return redirect(url_for("admin.users"))
 
 
 def _admin_count() -> int:
     return db.session.scalar(select(func.count()).select_from(User).where(User.is_admin)) or 0
+
+
+def _active_admin_count() -> int:
+    return (
+        db.session.scalar(
+            select(func.count()).select_from(User).where(User.is_admin, User.is_active)
+        )
+        or 0
+    )
 
 
 # Watchlists
@@ -295,7 +308,8 @@ def watchlist():
         if movie is None:
             flash("That Movie ID is not in the catalog.", "warning")
         else:
-            db.session.add(UserWatchlist(user_id=form.user_id.data, movie_id=movie.movie_id))
+            user = db.get(User, form.user_id.data)  
+            db.session.add(UserWatchlist(user=user, movie_id=movie.movie_id))
             try:
                 db.session.commit()
             except IntegrityError:
