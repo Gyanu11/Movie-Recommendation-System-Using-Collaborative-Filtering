@@ -59,6 +59,9 @@ def login():
     if form.validate_on_submit():
         user = db.session.scalar(select(User).where(User.email == form.email.data))
         if user and bcrypt.check_password_hash(user.password, form.password.data):
+            if not user.is_active:
+                flash("This account has been deactivated. Please contact an administrator.", "danger")
+                return render_template("login.html", title="Login", form=form)
             login_user(user, remember=form.remember.data)
             flash(f"Welcome back, {user.username}.", "success")
 
