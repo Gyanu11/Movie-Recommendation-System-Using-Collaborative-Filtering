@@ -26,6 +26,7 @@
           <th class="px-4 py-3">Username</th>
           <th class="px-4 py-3">Email</th>
           <th class="px-4 py-3">Role</th>
+          <th class="px-4 py-3">Status</th>
           <th class="px-4 py-3 text-right">Ratings</th>
           <th class="px-4 py-3 text-right">Actions</th>
         </tr>
@@ -43,22 +44,32 @@
             <span class="rounded-full bg-slate-100 px-2.5 py-1 text-xs font-medium text-slate-500">Member</span>
             {% endif %}
           </td>
+          <td class="px-4 py-3">
+            {% if user.is_active %}
+            <span class="rounded-full bg-emerald-50 px-2.5 py-1 text-xs font-semibold text-emerald-700">Active</span>
+            {% else %}
+            <span class="rounded-full bg-rose-50 px-2.5 py-1 text-xs font-semibold text-rose-600">Inactive</span>
+            {% endif %}
+          </td>
           <td class="px-4 py-3 text-right">{{ user.ratings | length }}</td>
           <td class="px-4 py-3">
             <div class="flex justify-end gap-2">
-              <a class="{{ btn_sm }} rounded-lg bg-emerald-50 px-3 py-1.5 text-xs font-semibold text-emerald-600 transition hover:bg-emerald-100" 
-              href="{{ url_for('admin.user_edit', user_id=user.id) }}">Edit</a>
-              <form method="POST" action="{{ url_for('admin.user_delete', user_id=user.id) }}"
-                    onsubmit="return confirm('Delete {{ user.username }} and all their saved data?');">
+              <form method="POST" action="{{ url_for('admin.user_toggle_active', user_id=user.id) }}"
+                    {% if user.is_active %}onsubmit="return confirm('Deactivate {{ user.username }}? They will no longer be able to log in.');"{% endif %}>
                 {{ csrf_form.hidden_tag() }}
-                <button class="{{ btn_danger }} rounded-lg bg-rose-50 px-3 py-1.5 text-xs font-semibold text-rose-600 transition hover:bg-rose-100" 
-                type="submit">Delete</button>
+                {% if user.is_active %}
+                <button class="rounded-lg bg-rose-50 px-3 py-1.5 text-xs font-semibold text-rose-600 transition hover:bg-rose-100"
+                type="submit">Deactivate</button>
+                {% else %}
+                <button class="rounded-lg bg-brand-50 px-3 py-1.5 text-xs font-semibold text-brand-700 transition hover:bg-brand-100"
+                type="submit">Activate</button>
+                {% endif %}
               </form>
             </div>
           </td>
         </tr>
         {% endfor %}
-        <tr data-empty class="{{ '' if not users else 'hidden' }}"><td class="px-4 py-8 text-center text-slate-400" colspan="6">No users found.</td></tr>
+        <tr data-empty class="{{ '' if not users else 'hidden' }}"><td class="px-4 py-8 text-center text-slate-400" colspan="7">No users found.</td></tr>
       </tbody>
     </table>
   </div>
