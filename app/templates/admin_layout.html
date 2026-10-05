@@ -67,7 +67,7 @@
         '<circle cx="12" cy="12" r="9"/><path d="M12 8v8M8 12h8"/>') }}
 
       <p class="px-3.5 pb-1 pt-5 text-[11px] font-semibold uppercase tracking-wider text-slate-400">Accounts</p>
-      {{ nav_item(url_for('admin.users'), 'Users', here in ('admin.users', 'admin.user_edit', 'admin.user_delete'),
+      {{ nav_item(url_for('admin.users'), 'Users', here in ('admin.users', 'admin.user_edit', 'admin.user_toggle_active'),
         '<path d="M17 21v-2a4 4 0 0 0-4-4H7a4 4 0 0 0-4 4v2"/><circle cx="10" cy="7" r="4"/><path d="M21 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75"/>') }}
       {{ nav_item(url_for('admin.user_create'), 'Add user', here == 'admin.user_create',
         '<path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M19 8v6M22 11h-6"/>') }}
