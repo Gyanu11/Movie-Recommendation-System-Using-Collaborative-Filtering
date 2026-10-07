@@ -304,7 +304,7 @@ regenerate from scratch.
 
 1. Download **MovieLens 20M** from
    <https://grouplens.org/datasets/movielens/20m/>
-2. Copy the CSV files directly into `data/raw/` (see `data/raw/README.md`)
+2. Copy the CSV files directly into `data/raw/` (see `data/raw/`)
 3. Run:
 
 ```bash

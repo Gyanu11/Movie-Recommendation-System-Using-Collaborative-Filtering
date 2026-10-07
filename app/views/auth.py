@@ -150,3 +150,14 @@ def account():
         entry["your_rating"] = row.rating
         rated.append(entry)
 
+    return render_template(
+        "account.html",
+        title="Account",
+        form=form,
+        delete_form=CsrfOnlyForm(),
+        image_file=url_for("static", filename=f"profile_pics/{current_user.image_file}"),
+        timestamp=int(datetime.now(timezone.utc).timestamp()),
+        watchlist=watchlist,
+        watchlist_limit=current_app.config["WATCHLIST_MAX_ITEMS"],
+        rated=rated,
+    )
