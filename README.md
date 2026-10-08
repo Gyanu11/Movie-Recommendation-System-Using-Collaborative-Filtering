@@ -202,7 +202,6 @@ movie-recommendation-system/
 │   ├── static/                 CSS (Tailwind)
 │   └── templates/              Jinja2 HTML Templates
 ├── data/
-│   ├── raw/                    ← put the MovieLens CSVs here (not shipped)
 │   └── processed/              trained model artifacts (shipped, ~2.2 MB)
 ├── instance/
 │   └── site.db
@@ -304,7 +303,7 @@ regenerate from scratch.
 
 1. Download **MovieLens 20M** from
    <https://grouplens.org/datasets/movielens/20m/>
-2. Copy the CSV files directly into `data/raw/` (see `data/raw/`)
+2. Copy the CSV files directly into `data/raw/` after creating (`data/raw/`)
 3. Run:
 
 ```bash
