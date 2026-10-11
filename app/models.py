@@ -47,7 +47,7 @@ class User(db.Model, UserMixin):
     ratings = db.relationship(
         "UserRating", back_populates="user", lazy="selectin", cascade="all, delete-orphan"
     )
-
+    
     def __repr__(self) -> str:
         return f"<User {self.username!r}>"
 

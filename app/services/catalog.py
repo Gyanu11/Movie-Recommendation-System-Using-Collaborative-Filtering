@@ -362,7 +362,7 @@ class MovieCatalog:
 
     def find_best_match(self, query: str) -> Movie | None:
         """Single confident title match, used to resolve the recommender's seed.
-
+        
         Returns None rather than a weak guess: recommending from the wrong film
         is worse than telling the user the title was not found.
         """

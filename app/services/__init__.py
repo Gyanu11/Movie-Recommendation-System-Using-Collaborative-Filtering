@@ -43,10 +43,8 @@ def init_services(app: Flask) -> RecommendationEngine:
     app.extensions["recommendation_engine"] = engine
     return engine
 
-
 def get_catalog() -> MovieCatalog:
     return current_app.extensions["movie_catalog"]
-
 
 def get_engine() -> RecommendationEngine:
     return current_app.extensions["recommendation_engine"]
